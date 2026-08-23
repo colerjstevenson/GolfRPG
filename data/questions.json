@@ -1,0 +1,54 @@
+{
+	"questions": [
+		{
+			"id": "q_001",
+			"prompt": "Do you think golf courses should make room for people who do not play golf?",
+			"options": [
+				{ "id": "strong_yes", "label": "Yes, they should welcome more people." },
+				{ "id": "somewhat_yes", "label": "Somewhat, as long as golf still works well." },
+				{ "id": "unsure", "label": "I'm not sure yet." },
+				{ "id": "no", "label": "No, they should mainly stay for golfers." }
+			]
+		},
+		{
+			"id": "q_002",
+			"prompt": "How would you feel about walking paths being added around the edge of a golf course?",
+			"options": [
+				{ "id": "like_it", "label": "I would like that." },
+				{ "id": "depends", "label": "It depends on how it is managed." },
+				{ "id": "neutral", "label": "I do not feel strongly either way." },
+				{ "id": "dislike_it", "label": "I would rather keep the course as it is." }
+			]
+		},
+		{
+			"id": "q_003",
+			"prompt": "What should happen to unused open space on a golf course?",
+			"options": [
+				{ "id": "community_space", "label": "Use some of it for community space." },
+				{ "id": "nature", "label": "Use some of it for plants and wildlife." },
+				{ "id": "golf_only", "label": "Keep it focused on golf." },
+				{ "id": "unsure", "label": "I would need to know more." }
+			]
+		},
+		{
+			"id": "q_004",
+			"prompt": "Who should have the easiest access to green space in a neighborhood?",
+			"options": [
+				{ "id": "everyone", "label": "Everyone nearby." },
+				{ "id": "members", "label": "People who pay to maintain it." },
+				{ "id": "shared", "label": "A mix of members and public access." },
+				{ "id": "not_sure", "label": "I'm not sure." }
+			]
+		},
+		{
+			"id": "q_005",
+			"prompt": "What would make a golf course feel more welcoming to you?",
+			"options": [
+				{ "id": "clear_signs", "label": "Clear signs showing where visitors can go." },
+				{ "id": "places_to_sit", "label": "Places to sit, walk, or gather." },
+				{ "id": "friendly_staff", "label": "Friendlier staff and less formal rules." },
+				{ "id": "already_welcoming", "label": "It already feels welcoming enough." }
+			]
+		}
+	]
+}

@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://brmcm5xeeqnes"]
+
+[ext_resource type="Script" uid="uid://bkxiuu47o6cjl" path="res://scripts/ball.gd" id="1_4m0m0"]
+[ext_resource type="Texture2D" uid="uid://d4m7lkp3r3sbo" path="res://assets/tile-B-01.png" id="1_d60mj"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ij5cq"]
+radius = 5.0
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ij5cq"]
+atlas = ExtResource("1_d60mj")
+region = Rect2(687.637, 735.611, 17.8456, 18.4985)
+
+[node name="Ball" type="Area2D"]
+collision_layer = 2
+collision_mask = 2
+script = ExtResource("1_4m0m0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_ij5cq")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -2.38419e-07)
+scale = Vector2(0.558824, 0.558824)
+texture = SubResource("AtlasTexture_ij5cq")
