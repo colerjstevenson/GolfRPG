@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 signal shot_mode_entered(ball: Node2D)
 signal shot_mode_exited
+signal aim_drag_started(ball: Node2D, screen_position: Vector2)
 signal aim_power_changed(power_ratio: float)
 signal scripted_walk_finished
 
@@ -70,12 +71,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			drag_start = get_global_mouse_position()
+			drag_start = get_viewport().get_mouse_position()
 			dragging = true
 			drag_power = 0.0
 			drag_dir = Vector2.ZERO
+			aim_drag_started.emit(current_ball, drag_start)
 		elif dragging:
-			var pull := get_global_mouse_position() - drag_start
+			var pull := get_viewport().get_mouse_position() - drag_start
 			if pull.length() > 2.0:
 				drag_dir = (-pull).normalized()
 				drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)
@@ -92,7 +94,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 	if event is InputEventMouseMotion and dragging and current_ball != null:
-		var pull := get_global_mouse_position() - drag_start
+		var pull := get_viewport().get_mouse_position() - drag_start
 		if pull.length() > 2.0:
 			drag_dir = (-pull).normalized()
 			drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)

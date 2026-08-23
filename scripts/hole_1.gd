@@ -10,9 +10,11 @@ extends Node2D
 @onready var exit: Area2D = $exit
 @onready var fade_overlay: ColorRect = $CanvasLayer/FadeOverlay
 
-const CAMERA_ZOOM_MULTIPLIER := 1.15
+const CAMERA_ZOOM_MULTIPLIER := 2
 const SHOT_MODE_ZOOM_MULTIPLIER := 1.5
-const AIM_ZOOM_OUT_MULTIPLIER := 0.9
+const AIM_ZOOM_OUT_MULTIPLIER := 0.3
+const PUTTING_SHOT_MODE_ZOOM_MULTIPLIER := 1.2
+const PUTTING_AIM_ZOOM_OUT_MULTIPLIER := 0.9
 const CAMERA_FOLLOW_SPEED := 10.0
 const HOLE_MAX_ENTRY_SPEED := 120.0
 const ENTRY_ZOOM_MULTIPLIER := 1.25
@@ -31,6 +33,9 @@ enum TransitionPhase {
 var camera_target: Node2D
 var default_zoom: Vector2
 var target_zoom: Vector2
+var aim_anchor_ball: Node2D
+var aim_anchor_screen_position: Vector2
+var camera_limit_rect: Rect2i
 var transition_phase: int = TransitionPhase.ENTERING
 var exit_started: bool = false
 var player_entry_start: Vector2
@@ -43,6 +48,7 @@ func _ready() -> void:
 	ball.holed.connect(_on_ball_holed)
 	player.shot_mode_entered.connect(_on_shot_mode_entered)
 	player.shot_mode_exited.connect(_on_shot_mode_exited)
+	player.aim_drag_started.connect(_on_aim_drag_started)
 	player.aim_power_changed.connect(_on_aim_power_changed)
 	player.scripted_walk_finished.connect(_on_scripted_walk_finished)
 	if exit != null:
@@ -65,15 +71,19 @@ func _ready() -> void:
 	_fade_to(0.0, TRANSITION_DURATION)
 
 func _process(delta: float) -> void:
-	if camera_target != null:
-		follow_camera.global_position = follow_camera.global_position.lerp(
-			camera_target.global_position,
-			clampf(delta * CAMERA_FOLLOW_SPEED, 0.0, 1.0)
-		)
 	follow_camera.zoom = follow_camera.zoom.lerp(
 		target_zoom,
 		clampf(delta * CAMERA_FOLLOW_SPEED, 0.0, 1.0)
 	)
+	if aim_anchor_ball != null:
+		var viewport_center := get_viewport_rect().size * 0.5
+		var anchor_offset := (aim_anchor_screen_position - viewport_center) / follow_camera.zoom
+		follow_camera.global_position = aim_anchor_ball.global_position - anchor_offset
+	elif camera_target != null:
+		follow_camera.global_position = follow_camera.global_position.lerp(
+			camera_target.global_position,
+			clampf(delta * CAMERA_FOLLOW_SPEED, 0.0, 1.0)
+		)
 
 func _physics_process(_delta: float) -> void:
 	if ball.state == ball.State.ROLLING and ball.velocity.length() <= HOLE_MAX_ENTRY_SPEED:
@@ -144,21 +154,49 @@ func _get_next_hole_scene_path() -> String:
 	var next_number := int(result.get_string()) + 1
 	return scene_file_path.substr(0, result.get_start()) + str(next_number) + ".tscn"
 
-func _on_shot_mode_entered(_ball: Node2D) -> void:
-	target_zoom = default_zoom * SHOT_MODE_ZOOM_MULTIPLIER
+func _on_shot_mode_entered(shot_ball: Node2D) -> void:
+	var zoom_multiplier := SHOT_MODE_ZOOM_MULTIPLIER
+	if shot_ball.get_terrain_name() == "green":
+		zoom_multiplier = PUTTING_SHOT_MODE_ZOOM_MULTIPLIER
+	target_zoom = default_zoom * zoom_multiplier
 
 func _on_shot_mode_exited() -> void:
+	_clear_aim_anchor()
 	camera_target = player
 	target_zoom = default_zoom
 
 func _on_flight_started(flight_ball: Node2D) -> void:
+	_clear_aim_anchor()
 	camera_target = flight_ball
-	target_zoom = default_zoom * AIM_ZOOM_OUT_MULTIPLIER
+	var zoom_multiplier := AIM_ZOOM_OUT_MULTIPLIER
+	if flight_ball.get_terrain_name() == "green":
+		zoom_multiplier = PUTTING_AIM_ZOOM_OUT_MULTIPLIER
+	target_zoom = default_zoom * zoom_multiplier
+
+func _on_aim_drag_started(shot_ball: Node2D, screen_position: Vector2) -> void:
+	aim_anchor_ball = shot_ball
+	aim_anchor_screen_position = screen_position
+	follow_camera.limit_left = -1000000000
+	follow_camera.limit_top = -1000000000
+	follow_camera.limit_right = 1000000000
+	follow_camera.limit_bottom = 1000000000
+
+func _clear_aim_anchor() -> void:
+	aim_anchor_ball = null
+	follow_camera.limit_left = camera_limit_rect.position.x
+	follow_camera.limit_top = camera_limit_rect.position.y
+	follow_camera.limit_right = camera_limit_rect.end.x
+	follow_camera.limit_bottom = camera_limit_rect.end.y
 
 func _on_aim_power_changed(power_ratio: float) -> void:
+	var shot_mode_zoom_multiplier := SHOT_MODE_ZOOM_MULTIPLIER
+	var aim_zoom_out_multiplier := AIM_ZOOM_OUT_MULTIPLIER
+	if ball.get_terrain_name() == "green":
+		shot_mode_zoom_multiplier = PUTTING_SHOT_MODE_ZOOM_MULTIPLIER
+		aim_zoom_out_multiplier = PUTTING_AIM_ZOOM_OUT_MULTIPLIER
 	var zoom_multiplier := lerpf(
-		SHOT_MODE_ZOOM_MULTIPLIER,
-		AIM_ZOOM_OUT_MULTIPLIER,
+		shot_mode_zoom_multiplier,
+		aim_zoom_out_multiplier,
 		clampf(power_ratio, 0.0, 1.0)
 	)
 	target_zoom = default_zoom * zoom_multiplier
@@ -168,11 +206,12 @@ func _set_camera_limits() -> void:
 	var tile_size := Vector2(ground.tile_set.tile_size)
 	var map_position := Vector2(used_rect.position) * tile_size
 	var map_size := Vector2(used_rect.size) * tile_size
+	camera_limit_rect = Rect2i(map_position, map_size)
 
-	follow_camera.limit_left = int(map_position.x)
-	follow_camera.limit_top = int(map_position.y)
-	follow_camera.limit_right = int(map_position.x + map_size.x)
-	follow_camera.limit_bottom = int(map_position.y + map_size.y)
+	follow_camera.limit_left = camera_limit_rect.position.x
+	follow_camera.limit_top = camera_limit_rect.position.y
+	follow_camera.limit_right = camera_limit_rect.end.x
+	follow_camera.limit_bottom = camera_limit_rect.end.y
 	follow_camera.limit_smoothed = true
 
 	var viewport_size := get_viewport_rect().size
