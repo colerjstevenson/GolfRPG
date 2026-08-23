@@ -81,12 +81,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			if pull.length() > 2.0:
 				drag_dir = (-pull).normalized()
 				drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)
-				aim_power_changed.emit(drag_power)
-				current_ball.set_aim_preview(drag_dir, drag_power)
-				current_ball.launch(drag_dir, drag_power)
-				state = State.LOCKED
+				if drag_power < current_ball.min_shot_power_ratio:
+					current_ball.clear_aim_preview()
+					drag_power = 0.0
+					aim_power_changed.emit(0.0)
+				else:
+					aim_power_changed.emit(drag_power)
+					current_ball.set_aim_preview(drag_dir, drag_power)
+					current_ball.launch(drag_dir, drag_power)
+					state = State.LOCKED
 			else:
 				current_ball.clear_aim_preview()
+				aim_power_changed.emit(0.0)
 				state = State.FREE
 				current_ball = null
 				shot_mode_exited.emit()

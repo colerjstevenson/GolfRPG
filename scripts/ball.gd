@@ -12,7 +12,8 @@ enum State {
 	HOLED,
 }
 
-@export var max_drag_px: float = 120.0
+@export var max_drag_px: float = 350.0
+@export var min_shot_power_ratio: float = 0.08
 @export var max_speed: float = 500.0
 @export var max_flight_distance: float = 400.0
 @export var max_arc_height: float = 40.0
