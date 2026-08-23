@@ -3,12 +3,14 @@ extends CharacterBody2D
 signal shot_mode_entered(ball: Node2D)
 signal shot_mode_exited
 signal aim_power_changed(power_ratio: float)
+signal scripted_walk_finished
 
 enum State {
 	FREE,
 	WALK_TO_BALL,
 	AIMING,
 	LOCKED,
+	SCRIPTED_WALK,
 }
 
 @export var speed: float = 100.0
@@ -49,6 +51,13 @@ func on_ball_clicked(ball: Node2D) -> void:
 	target_position = ball.global_position - offset_dir * stand_distance
 	is_moving = true
 	state = State.WALK_TO_BALL
+
+func scripted_walk_to(destination: Vector2) -> void:
+	if state == State.LOCKED:
+		return
+	state = State.SCRIPTED_WALK
+	target_position = destination
+	is_moving = true
 
 func _unhandled_input(event: InputEvent) -> void:
 	if state == State.FREE and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -113,6 +122,10 @@ func _physics_process(delta: float) -> void:
 			return
 		global_position = target_position
 		_finish_movement()
+		if state == State.SCRIPTED_WALK:
+			state = State.FREE
+			scripted_walk_finished.emit()
+			return
 		if state == State.WALK_TO_BALL:
 			state = State.AIMING
 			shot_mode_entered.emit(current_ball)
