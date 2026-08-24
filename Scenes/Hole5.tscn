@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=4 uid="uid://byesms4kvnjty"]
+[gd_scene load_steps=30 format=4 uid="uid://byesms4kvnjty"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_m6rog"]
 [ext_resource type="Texture2D" uid="uid://d4m7lkp3r3sbo" path="res://assets/tile-B-01.png" id="2_nti8t"]
@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="11_qclkj"]
 [ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="12_hur6j"]
 [ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="13_327ex"]
+[ext_resource type="PackedScene" uid="uid://bxuwl0nhn5asc" path="res://Scenes/NPC.tscn" id="14_m8ont"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wnon8"]
 texture = ExtResource("2_nti8t")
@@ -10671,6 +10672,12 @@ size = Vector2(184, 72)
 atlas = ExtResource("4_4tpiw")
 region = Rect2(628.09, 97.9962, 39.6058, 92.1799)
 
+[sub_resource type="Curve2D" id="Curve2D_m6rog"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 544, 5)
+}
+point_count = 2
+
 [node name="Node2D2" type="Node2D"]
 script = ExtResource("1_m6rog")
 
@@ -10869,4 +10876,12 @@ texture_normal = SubResource("AtlasTexture_bs618")
 ignore_texture_size = true
 stretch_mode = 0
 
+[node name="CharacterBody2D" parent="." instance=ExtResource("14_m8ont")]
+position = Vector2(30, 534)
+
+[node name="PatrolPath" parent="CharacterBody2D" index="0"]
+curve = SubResource("Curve2D_m6rog")
+
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]
+
+[editable path="CharacterBody2D"]
