@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=4 uid="uid://keqyutfcomg7"]
+[gd_scene load_steps=25 format=4 uid="uid://keqyutfcomg7"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_xepid"]
 [ext_resource type="PackedScene" uid="uid://d0haoebdd17sb" path="res://Scenes/Hole3.tscn" id="2_1lcdo"]
@@ -10659,7 +10659,11 @@ _data = {
 }
 point_count = 5
 
-[node name="Node2D" type="Node2D"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_1lcdo"]
+atlas = ExtResource("4_76trt")
+region = Rect2(628.09, 97.9962, 39.6058, 92.1799)
+
+[node name="Node2D3" type="Node2D"]
 script = ExtResource("1_xepid")
 next_hole_scene = ExtResource("2_1lcdo")
 
@@ -10726,5 +10730,17 @@ position = Vector2(505, 288)
 
 [node name="PatrolPath" parent="CharacterBody2D" index="0"]
 curve = SubResource("Curve2D_76trt")
+
+[node name="Rake" type="TextureButton" parent="."]
+texture_filter = 1
+offset_left = 557.0
+offset_top = 3.0
+offset_right = 578.0
+offset_bottom = 53.0
+texture_normal = SubResource("AtlasTexture_1lcdo")
+ignore_texture_size = true
+stretch_mode = 0
+
+[connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]
 
 [editable path="CharacterBody2D"]

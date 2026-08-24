@@ -468,30 +468,6 @@ The project should aim for a polished, relatively short experience rather than e
 
 ---
 
-# 14. Recommended Initial Scope
-
-The first playable prototype should be much smaller than the final nine-hole game.
-
-### Prototype
-
-Build:
-
-* One small golf hole
-* Basic player movement
-* Basic golf shot
-* Walking to the ball
-* One NPC
-* One survey question
-* Basic answer tracking
-* One visible environmental transformation
-
-The prototype succeeds if the following loop works:
-
-**Hit ball → Walk → Talk → Answer → Finish hole → See the world change**
-
-Once this works and feels good, the systems can be expanded to nine holes.
-
----
 
 # 15. Technology Direction
 
@@ -515,22 +491,3 @@ Specific technical architecture should remain flexible during early prototyping.
 
 ---
 
-# 16. Long-Term Vision
-
-The ideal final experience should leave the player with the feeling that they did more than complete a survey.
-
-They played a round of golf.
-
-They met people.
-
-They heard different perspectives.
-
-They made choices.
-
-And by the time they reach the eighteenth hole, they can look around and see a version of the golf course shaped by those choices.
-
-The central question of the project is:
-
-> **What could a golf course be used for, and who should it serve?**
-
-The game uses the player's own answers to explore that question visually and interactively.

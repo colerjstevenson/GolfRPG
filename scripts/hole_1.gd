@@ -9,6 +9,7 @@ extends Node2D
 @onready var entrance: Area2D = $entrance
 @onready var exit: Area2D = $exit
 @onready var fade_overlay: ColorRect = $CanvasLayer/FadeOverlay
+@onready var rake_button: TextureButton = %Rake
 
 const CAMERA_ZOOM_MULTIPLIER := 2
 const SHOT_MODE_ZOOM_MULTIPLIER := 1.5
@@ -39,10 +40,19 @@ var camera_limit_rect: Rect2i
 var transition_phase: int = TransitionPhase.ENTERING
 var exit_started: bool = false
 var player_entry_start: Vector2
+var footprint_container: Node2D
 
 func _ready() -> void:
+	footprint_container = Node2D.new()
+	footprint_container.name = "Footprints"
+	footprint_container.z_index = 1
+	add_child(footprint_container)
+
 	ball.ground_layer = ground
 	ball.ground_items_layer = ground_items
+	player.ground_layer = ground
+	player.ground_items_layer = ground_items
+	player.footprint_parent = footprint_container
 	ball.clicked.connect(player.on_ball_clicked)
 	ball.flight_started.connect(_on_flight_started)
 	ball.holed.connect(_on_ball_holed)
@@ -51,6 +61,8 @@ func _ready() -> void:
 	player.aim_drag_started.connect(_on_aim_drag_started)
 	player.aim_power_changed.connect(_on_aim_power_changed)
 	player.scripted_walk_finished.connect(_on_scripted_walk_finished)
+	if rake_button != null:
+		rake_button.pressed.connect(_on_rake_pressed)
 	if exit != null:
 		exit.input_event.connect(_on_exit_input)
 		exit.input_pickable = false
@@ -109,6 +121,10 @@ func _on_ball_holed() -> void:
 	if exit != null:
 		exit.input_pickable = true
 		exit.monitoring = true
+
+func _on_rake_pressed() -> void:
+	for footprint in footprint_container.get_children():
+		footprint.queue_free()
 
 func _on_exit_input(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if transition_phase != TransitionPhase.PLAYING:
