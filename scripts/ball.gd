@@ -25,6 +25,8 @@ enum State {
 @export var green_friction: float = 180.0
 @export var wobble_max_angle_deg: float = 20.0
 @export var wobble_frequency: float = 6.0
+@export var npc_bounce_speed_ratio: float = 0.4
+@export var npc_hit_min_speed: float = 40.0
 @export var ground_layer: TileMapLayer
 @export var ground_items_layer: TileMapLayer
 
@@ -50,8 +52,10 @@ var is_putting_shot: bool = false
 func _ready() -> void:
 	input_pickable = true
 	input_event.connect(_on_input_event)
+	body_entered.connect(_on_body_entered)
 	base_sprite_position = ball_sprite.position
 	base_sprite_scale = ball_sprite.scale
+	add_to_group(&"ball")
 
 func _on_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if state != State.IDLE:
@@ -59,6 +63,26 @@ func _on_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) ->
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		clicked.emit(self)
 		_viewport.set_input_as_handled()
+
+func _on_body_entered(body: Node) -> void:
+	if not body.has_method("knock_down"):
+		return
+	if state == State.FLYING:
+		var incoming_dir := (flight_end - flight_start).normalized()
+		var incoming_speed := predicted_distance(flight_power) / maxf(flight_duration, 0.001)
+		_bounce_off_npc(body, incoming_dir, incoming_speed)
+	elif state == State.ROLLING and velocity.length() > npc_hit_min_speed:
+		_bounce_off_npc(body, velocity.normalized(), velocity.length())
+
+func _bounce_off_npc(body: Node, incoming_dir: Vector2, incoming_speed: float) -> void:
+	body.knock_down()
+	ball_sprite.position = base_sprite_position
+	ball_sprite.scale = base_sprite_scale
+	landing_bounce_time = 0.0
+	landing_bounce_height_current = 0.0
+	landing_bounce_duration_current = 0.0
+	velocity = -incoming_dir * incoming_speed * npc_bounce_speed_ratio
+	state = State.ROLLING
 
 func set_aim_preview(direction: Vector2, power_ratio: float) -> void:
 	if direction.length_squared() < 0.0001:

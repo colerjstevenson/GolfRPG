@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=4 uid="uid://d0haoebdd17sb"]
+[gd_scene load_steps=23 format=4 uid="uid://d0haoebdd17sb"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_cc288"]
 [ext_resource type="Texture2D" uid="uid://d4m7lkp3r3sbo" path="res://assets/tile-B-01.png" id="2_jpdms"]
@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://c4f7p7wfihs6j" path="res://assets/golf.png" id="8_kyblp"]
 [ext_resource type="PackedScene" uid="uid://dutwq77dgdl7n" path="res://Scenes/Player.tscn" id="9_2u3k5"]
 [ext_resource type="PackedScene" uid="uid://brmcm5xeeqnes" path="res://Scenes/ball.tscn" id="10_jv6h5"]
+[ext_resource type="PackedScene" uid="uid://bxuwl0nhn5asc" path="res://Scenes/NPC.tscn" id="11_jpdms"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wnon8"]
 texture = ExtResource("2_jpdms")
@@ -10651,6 +10652,12 @@ radius = 2.23607
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_o1g2h"]
 size = Vector2(184, 72)
 
+[sub_resource type="Curve2D" id="Curve2D_aslcb"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 438, -9)
+}
+point_count = 2
+
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_cc288")
 
@@ -10711,3 +10718,11 @@ collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="exit"]
 shape = SubResource("RectangleShape2D_o1g2h")
+
+[node name="CharacterBody2D" parent="." instance=ExtResource("11_jpdms")]
+position = Vector2(59, -29)
+
+[node name="PatrolPath" parent="CharacterBody2D" index="0"]
+curve = SubResource("Curve2D_aslcb")
+
+[editable path="CharacterBody2D"]
