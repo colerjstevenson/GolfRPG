@@ -38,6 +38,7 @@ var drag_power: float = 0.0
 var drag_dir: Vector2 = Vector2.ZERO
 var has_last_footprint: bool = false
 var last_footprint_position: Vector2
+var input_locked: bool = false
 
 func _ready() -> void:
 	target_position = global_position
@@ -70,7 +71,19 @@ func scripted_walk_to(destination: Vector2) -> void:
 	target_position = destination
 	is_moving = true
 
+func set_input_locked(locked: bool) -> void:
+	input_locked = locked
+
+func face_towards(world_position: Vector2) -> void:
+	var to_target := world_position - global_position
+	_update_animation(to_target.normalized() if to_target.length() > 0.0001 else Vector2.DOWN)
+	animated_sprite.frame = 0
+	animated_sprite.pause()
+
 func _unhandled_input(event: InputEvent) -> void:
+	if input_locked:
+		return
+
 	if state == State.FREE and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		target_position = get_global_mouse_position()
 		is_moving = true
@@ -181,6 +194,11 @@ func _stop_movement() -> void:
 	if state == State.WALK_TO_BALL:
 		state = State.FREE
 		current_ball = null
+		return
+	# A blocked scripted walk still has to report in, or the caller waits forever.
+	if state == State.SCRIPTED_WALK:
+		state = State.FREE
+		scripted_walk_finished.emit()
 
 func _update_animation(direction: Vector2) -> void:
 	var anim_name: String

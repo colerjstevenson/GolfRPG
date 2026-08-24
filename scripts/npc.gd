@@ -1,6 +1,8 @@
 @tool
 extends CharacterBody2D
 
+signal clicked(npc: Node2D)
+
 const FRAME_SIZE := Vector2i(16, 16)
 const ANIMATION_SPEED := 5.0
 const DEFAULT_ANIMATION := &"fallen"
@@ -45,6 +47,8 @@ var _is_patrolling: bool = false
 var _wait_timer: float = 0.0
 var _last_direction: String = "down"
 var is_knocked_down: bool = false
+var is_in_dialog: bool = false
+var _was_patrolling_before_dialog: bool = false
 
 
 func _ready() -> void:
@@ -63,7 +67,33 @@ func _ready() -> void:
 	_refresh_patrol_points()
 	if autostart_patrol:
 		start_patrol()
+	input_pickable = true
+	input_event.connect(_on_input_event)
 	call_deferred("_connect_to_ball")
+
+
+func _on_input_event(viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
+	if is_in_dialog or is_knocked_down:
+		return
+	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
+		return
+	viewport.set_input_as_handled()
+	clicked.emit(self)
+
+
+## Freezes the NPC facing the camera for the duration of a conversation.
+func face_forward() -> void:
+	is_in_dialog = true
+	_was_patrolling_before_dialog = _is_patrolling
+	_last_direction = "down"
+	stop_patrol()
+
+
+func resume_after_dialog() -> void:
+	is_in_dialog = false
+	if _was_patrolling_before_dialog and not is_knocked_down:
+		start_patrol()
+	_was_patrolling_before_dialog = false
 
 
 func _connect_to_ball() -> void:

@@ -9,6 +9,7 @@ extends Node2D
 @onready var entrance: Area2D = $entrance
 @onready var exit: Area2D = $exit
 @onready var fade_overlay: ColorRect = $CanvasLayer/FadeOverlay
+@onready var dialog: TextureRect = $CanvasLayer/Dialog
 @onready var rake_button: TextureButton = %Rake
 
 const CAMERA_ZOOM_MULTIPLIER := 2
@@ -22,6 +23,10 @@ const ENTRY_ZOOM_MULTIPLIER := 1.25
 const EXIT_ZOOM_MULTIPLIER := 1.35
 const TRANSITION_DURATION := 0.4
 const FIRST_HOLE_SCENE_PATH := "res://Scenes/Hole1.tscn"
+const NPC_DIALOG_ZOOM_MULTIPLIER := 2.2
+# Fraction of the viewport the NPC is pinned to while talking, so they sit large near the top.
+const NPC_SCREEN_ANCHOR_RATIO := Vector2(0.5, 0.14)
+const NPC_STAND_DISTANCE := 28.0
 
 enum TransitionPhase {
 	ENTERING,
@@ -41,6 +46,9 @@ var transition_phase: int = TransitionPhase.ENTERING
 var exit_started: bool = false
 var player_entry_start: Vector2
 var footprint_container: Node2D
+var pending_npc: Node2D = null
+var focus_anchor_node: Node2D
+var focus_anchor_screen_position: Vector2
 
 func _ready() -> void:
 	footprint_container = Node2D.new()
@@ -61,6 +69,9 @@ func _ready() -> void:
 	player.aim_drag_started.connect(_on_aim_drag_started)
 	player.aim_power_changed.connect(_on_aim_power_changed)
 	player.scripted_walk_finished.connect(_on_scripted_walk_finished)
+	if dialog != null:
+		dialog.dialog_closed.connect(_on_dialog_closed)
+	_connect_npcs()
 	if rake_button != null:
 		rake_button.pressed.connect(_on_rake_pressed)
 	if exit != null:
@@ -91,6 +102,13 @@ func _process(delta: float) -> void:
 		var viewport_center := get_viewport_rect().size * 0.5
 		var anchor_offset := (aim_anchor_screen_position - viewport_center) / follow_camera.zoom
 		follow_camera.global_position = aim_anchor_ball.global_position - anchor_offset
+	elif focus_anchor_node != null:
+		var focus_center := get_viewport_rect().size * 0.5
+		var focus_offset := (focus_anchor_screen_position - focus_center) / follow_camera.zoom
+		follow_camera.global_position = follow_camera.global_position.lerp(
+			focus_anchor_node.global_position - focus_offset,
+			clampf(delta * CAMERA_FOLLOW_SPEED, 0.0, 1.0)
+		)
 	elif camera_target != null:
 		follow_camera.global_position = follow_camera.global_position.lerp(
 			camera_target.global_position,
@@ -149,6 +167,55 @@ func _on_scripted_walk_finished() -> void:
 		_fade_to(1.0, TRANSITION_DURATION)
 		await get_tree().create_timer(TRANSITION_DURATION).timeout
 		_transition_to_next_hole()
+		return
+	if pending_npc != null:
+		_start_dialog(pending_npc)
+
+func _connect_npcs() -> void:
+	for child in get_children():
+		if child.has_signal("clicked") and child.has_method("face_forward"):
+			child.connect("clicked", _on_npc_clicked)
+
+func _on_npc_clicked(npc: Node2D) -> void:
+	if transition_phase != TransitionPhase.PLAYING:
+		return
+	if pending_npc != null or (dialog != null and dialog.is_open()):
+		return
+	if player.state != player.State.FREE:
+		return
+
+	pending_npc = npc
+	npc.face_forward()
+	_set_world_input_enabled(false)
+
+	var to_player := player.global_position - npc.global_position
+	var offset_dir := to_player.normalized() if to_player.length() > 0.0001 else Vector2.DOWN
+	player.scripted_walk_to(npc.global_position + offset_dir * NPC_STAND_DISTANCE)
+
+func _start_dialog(npc: Node2D) -> void:
+	player.face_towards(npc.global_position)
+	player.set_input_locked(true)
+	_remove_camera_limits()
+	focus_anchor_node = npc
+	focus_anchor_screen_position = get_viewport_rect().size * NPC_SCREEN_ANCHOR_RATIO
+	target_zoom = default_zoom * NPC_DIALOG_ZOOM_MULTIPLIER
+	dialog.open_for(npc)
+
+func _on_dialog_closed(npc: Node2D) -> void:
+	focus_anchor_node = null
+	_restore_camera_limits()
+	camera_target = player
+	target_zoom = default_zoom
+	player.set_input_locked(false)
+	_set_world_input_enabled(true)
+	pending_npc = null
+	if npc != null and npc.has_method("resume_after_dialog"):
+		npc.resume_after_dialog()
+
+func _set_world_input_enabled(enabled: bool) -> void:
+	ball.input_pickable = enabled
+	if rake_button != null:
+		rake_button.disabled = not enabled
 
 func _transition_to_next_hole() -> void:
 	if next_hole_scene != null:
@@ -192,13 +259,19 @@ func _on_flight_started(flight_ball: Node2D) -> void:
 func _on_aim_drag_started(shot_ball: Node2D, screen_position: Vector2) -> void:
 	aim_anchor_ball = shot_ball
 	aim_anchor_screen_position = screen_position
+	_remove_camera_limits()
+
+func _clear_aim_anchor() -> void:
+	aim_anchor_ball = null
+	_restore_camera_limits()
+
+func _remove_camera_limits() -> void:
 	follow_camera.limit_left = -1000000000
 	follow_camera.limit_top = -1000000000
 	follow_camera.limit_right = 1000000000
 	follow_camera.limit_bottom = 1000000000
 
-func _clear_aim_anchor() -> void:
-	aim_anchor_ball = null
+func _restore_camera_limits() -> void:
 	follow_camera.limit_left = camera_limit_rect.position.x
 	follow_camera.limit_top = camera_limit_rect.position.y
 	follow_camera.limit_right = camera_limit_rect.end.x
