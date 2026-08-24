@@ -12,7 +12,7 @@ extends Node2D
 @onready var dialog: TextureRect = $CanvasLayer/Dialog
 @onready var rake_button: TextureButton = %Rake
 
-const CAMERA_ZOOM_MULTIPLIER := 2
+const BASE_CAMERA_ZOOM := 2.0
 const SHOT_MODE_ZOOM_MULTIPLIER := 1.5
 const AIM_ZOOM_OUT_MULTIPLIER := 0.3
 const PUTTING_SHOT_MODE_ZOOM_MULTIPLIER := 1.2
@@ -303,7 +303,5 @@ func _set_camera_limits() -> void:
 	follow_camera.limit_bottom = camera_limit_rect.end.y
 	follow_camera.limit_smoothed = true
 
-	var viewport_size := get_viewport_rect().size
-	var required_zoom := maxf(1.0, maxf(viewport_size.x / map_size.x, viewport_size.y / map_size.y))
-	default_zoom = Vector2.ONE * required_zoom * CAMERA_ZOOM_MULTIPLIER
+	default_zoom = Vector2.ONE * BASE_CAMERA_ZOOM
 	follow_camera.zoom = default_zoom
