@@ -92,6 +92,17 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_fo5tq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7fgga")
+}],
+"loop": true,
+"name": &"eroused",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_faxwx")
 }],
 "loop": true,
@@ -164,7 +175,8 @@ script = ExtResource("2_npc")
 texture_filter = 1
 scale = Vector2(1.68359, 1.68359)
 sprite_frames = SubResource("SpriteFrames_r0hpd")
-animation = &"down"
+animation = &"eroused"
+frame_progress = 0.955808
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_br8wg")

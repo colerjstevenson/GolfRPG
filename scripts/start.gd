@@ -16,7 +16,7 @@ const BASE_CAMERA_ZOOM := 2.0
 const SHOT_MODE_ZOOM_MULTIPLIER := 1.5
 const AIM_ZOOM_OUT_MULTIPLIER := 0.3
 const PUTTING_SHOT_MODE_ZOOM_MULTIPLIER := 1.2
-const PUTTING_AIM_ZOOM_OUT_MULTIPLIER := 0.9
+const PUTTING_AIM_ZOOM_OUT_MULTIPLIER := 0.5
 const CAMERA_FOLLOW_SPEED := 10.0
 const HOLE_MAX_ENTRY_SPEED := 120.0
 const ENTRY_ZOOM_MULTIPLIER := 1.25
@@ -80,8 +80,9 @@ func _ready() -> void:
 		rake_button.pressed.connect(_on_rake_pressed)
 	if exit != null:
 		exit.input_event.connect(_on_exit_input)
-		exit.input_pickable = false
-		exit.monitoring = false
+		# Start scene has no hole to sink, so the exit is open from the start.
+		exit.input_pickable = true
+		exit.monitoring = true
 	camera_target = player
 	get_viewport().physics_object_picking = true
 	_set_camera_limits()
