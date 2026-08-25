@@ -10878,7 +10878,6 @@ stretch_mode = 0
 
 [node name="CharacterBody2D" parent="." instance=ExtResource("14_m8ont")]
 position = Vector2(30, 534)
-npc_name = ""
 
 [node name="PatrolPath" parent="CharacterBody2D" index="0"]
 curve = SubResource("Curve2D_m6rog")

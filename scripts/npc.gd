@@ -5,7 +5,8 @@ signal clicked(npc: Node2D)
 
 const FRAME_SIZE := Vector2i(16, 16)
 const ANIMATION_SPEED := 5.0
-const DEFAULT_ANIMATION := &"fallen"
+const IDLE_ANIMATION := &"down"
+const FALLEN_ANIMATION := &"fallen"
 
 # All NPC sheets share this 16x16 cell layout; values are atlas origins per frame.
 const ANIMATION_LAYOUT := {
@@ -123,7 +124,7 @@ func knock_down() -> void:
 	is_knocked_down = true
 	_is_patrolling = false
 	velocity = Vector2.ZERO
-	animated_sprite.play(DEFAULT_ANIMATION)
+	animated_sprite.play(FALLEN_ANIMATION)
 
 
 func recover() -> void:
@@ -247,6 +248,10 @@ func _rebuild_frames() -> void:
 
 	animated_sprite.sprite_frames = frames
 	if Engine.is_editor_hint():
-		animated_sprite.animation = DEFAULT_ANIMATION
+		animated_sprite.animation = IDLE_ANIMATION
+		animated_sprite.frame = 0
+		animated_sprite.pause()
 	else:
-		animated_sprite.play(DEFAULT_ANIMATION)
+		animated_sprite.animation = IDLE_ANIMATION
+		animated_sprite.frame = 0
+		animated_sprite.pause()

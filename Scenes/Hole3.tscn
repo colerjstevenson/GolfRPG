@@ -10867,7 +10867,6 @@ shape = SubResource("RectangleShape2D_o1g2h")
 
 [node name="CharacterBody2D" parent="." instance=ExtResource("11_jpdms")]
 position = Vector2(59, -29)
-npc_name = ""
 
 [node name="PatrolPath" parent="CharacterBody2D" index="0"]
 curve = SubResource("Curve2D_aslcb")

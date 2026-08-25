@@ -25,6 +25,8 @@ const TRANSITION_DURATION := 0.4
 const START_SCENE_PATH := "res://Scenes/Start.tscn"
 const FIRST_HOLE_SCENE_PATH := "res://Scenes/Hole1.tscn"
 const NPC_DIALOG_ZOOM_MULTIPLIER := 2.2
+const RANGE_BALL_CUSTOM_DATA_NAME := "range ball"
+const RANGE_BALL_SCENE := preload("res://Scenes/ball.tscn")
 # Fraction of the viewport the NPC is pinned to while talking, so they sit large near the top.
 const NPC_SCREEN_ANCHOR_RATIO := Vector2(0.5, 0.14)
 const NPC_STAND_DISTANCE := 28.0
@@ -52,7 +54,7 @@ var focus_anchor_node: Node2D
 var focus_anchor_screen_position: Vector2
 
 func _ready() -> void:
-	CourseState.reset_hole()
+	CourseState.reset_round()
 	_ensure_stroke_hud()
 
 	footprint_container = Node2D.new()
@@ -65,9 +67,7 @@ func _ready() -> void:
 	player.ground_layer = ground
 	player.ground_items_layer = ground_items
 	player.footprint_parent = footprint_container
-	ball.clicked.connect(player.on_ball_clicked)
-	ball.flight_started.connect(_on_flight_started)
-	ball.holed.connect(_on_ball_holed)
+	_connect_ball(ball)
 	player.shot_mode_entered.connect(_on_shot_mode_entered)
 	player.shot_mode_exited.connect(_on_shot_mode_exited)
 	player.aim_drag_started.connect(_on_aim_drag_started)
@@ -93,6 +93,7 @@ func _ready() -> void:
 		fade_overlay.color = Color(0.0, 0.0, 0.0, 1.0)
 		fade_overlay.visible = true
 		fade_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_initialize_range_balls()
 	target_zoom = default_zoom * ENTRY_ZOOM_MULTIPLIER
 	player.scripted_walk_to(player_entry_start)
 	_fade_to(0.0, TRANSITION_DURATION)
@@ -137,6 +138,122 @@ func _fade_to(alpha: float, duration: float = TRANSITION_DURATION) -> void:
 			fade_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			fade_overlay.visible = false
 		)
+
+func _connect_ball(ball_node: Node2D) -> void:
+	if ball_node == null or not (ball_node is Area2D):
+		return
+	if not ball_node.has_signal("clicked"):
+		return
+	if not ball_node.is_connected("clicked", player.on_ball_clicked):
+		ball_node.clicked.connect(player.on_ball_clicked)
+	if not ball_node.is_connected("flight_started", _on_flight_started):
+		ball_node.flight_started.connect(_on_flight_started)
+	if not ball_node.is_connected("holed", _on_ball_holed):
+		ball_node.holed.connect(_on_ball_holed)
+	if not ball_node.is_connected("stopped", _on_range_ball_stopped):
+		ball_node.stopped.connect(_on_range_ball_stopped.bind(ball_node))
+
+func _initialize_range_balls() -> void:
+	_register_range_ball_nodes()
+	_spawn_missing_range_balls()
+
+func _register_range_ball_nodes() -> void:
+	for child in get_children():
+		if not (child is Area2D):
+			continue
+		if not child.has_method("launch"):
+			continue
+		_connect_ball(child)
+		var range_ball_cell: Variant = _get_range_ball_cell(child.global_position)
+		if range_ball_cell == null:
+			continue
+		child.set_meta("range_respawn_cell", range_ball_cell)
+
+func _spawn_missing_range_balls() -> void:
+	for layer in [_find_range_ball_layer(), ground_items, ground]:
+		if layer == null:
+			continue
+		for cell in layer.get_used_cells():
+			if not _is_range_ball_cell(layer, cell):
+				continue
+			if _has_range_ball_in_cell(cell, layer):
+				continue
+			var respawn_ball := RANGE_BALL_SCENE.instantiate()
+			respawn_ball.ground_layer = ground
+			respawn_ball.ground_items_layer = ground_items
+			respawn_ball.global_position = layer.to_global(layer.map_to_local(cell))
+			respawn_ball.set_meta("range_respawn_cell", cell)
+			_connect_range_ball(respawn_ball)
+			add_child(respawn_ball)
+
+func _connect_range_ball(ball_node: Node2D) -> void:
+	if ball_node == null or not (ball_node is Area2D):
+		return
+	if not ball_node.has_signal("stopped"):
+		return
+	if not ball_node.is_connected("stopped", _on_range_ball_stopped):
+		ball_node.stopped.connect(_on_range_ball_stopped.bind(ball_node))
+
+func _on_range_ball_stopped(range_ball: Node2D) -> void:
+	if range_ball == null or not range_ball.has_meta("range_respawn_cell"):
+		return
+	var respawn_cell: Vector2i = range_ball.get_meta("range_respawn_cell")
+	var respawn_layer := _find_range_ball_layer()
+	if respawn_layer == null:
+		respawn_layer = ground_items if ground_items != null else ground
+	if respawn_layer == null or not _is_range_ball_cell(respawn_layer, respawn_cell):
+		return
+	if _has_range_ball_in_cell(respawn_cell, respawn_layer):
+		return
+	var respawn_ball := RANGE_BALL_SCENE.instantiate()
+	respawn_ball.ground_layer = ground
+	respawn_ball.ground_items_layer = ground_items
+	respawn_ball.global_position = respawn_layer.to_global(respawn_layer.map_to_local(respawn_cell))
+	respawn_ball.set_meta("range_respawn_cell", respawn_cell)
+	_connect_range_ball(respawn_ball)
+	add_child(respawn_ball)
+
+func _find_range_ball_layer() -> TileMapLayer:
+	for layer in [ground_items, ground]:
+		if layer == null:
+			continue
+		for cell in layer.get_used_cells():
+			if _is_range_ball_cell(layer, cell):
+				return layer
+	return null
+
+func _get_range_ball_cell(world_position: Vector2) -> Variant:
+	for layer in [ground_items, ground]:
+		if layer == null:
+			continue
+		var cell: Vector2i = layer.local_to_map(layer.to_local(world_position))
+		var tile_data: TileData = layer.get_cell_tile_data(cell)
+		if tile_data == null:
+			continue
+		if bool(tile_data.get_custom_data(RANGE_BALL_CUSTOM_DATA_NAME)):
+			return cell
+	return null
+
+func _is_range_ball_cell(layer: TileMapLayer, cell: Vector2i) -> bool:
+	if layer == null:
+		return false
+	var tile_data: TileData = layer.get_cell_tile_data(cell)
+	if tile_data == null:
+		return false
+	return bool(tile_data.get_custom_data(RANGE_BALL_CUSTOM_DATA_NAME))
+
+func _has_range_ball_in_cell(cell: Vector2i, layer: TileMapLayer) -> bool:
+	if layer == null:
+		return false
+	var expected_position := layer.to_global(layer.map_to_local(cell))
+	for child in get_children():
+		if not (child is Area2D):
+			continue
+		if not child.has_method("launch"):
+			continue
+		if child.global_position.distance_to(expected_position) <= 12.0:
+			return true
+	return false
 
 func _on_ball_holed() -> void:
 	if transition_phase != TransitionPhase.PLAYING:
