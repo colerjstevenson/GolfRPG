@@ -49,6 +49,56 @@
 				{ "id": "friendly_staff", "label": "Friendlier staff and less formal rules." },
 				{ "id": "already_welcoming", "label": "It already feels welcoming enough." }
 			]
+		},
+		{
+			"id": "q_006",
+			"prompt": "How important is it that public space near a golf course feels safe and easy to use?",
+			"options": [
+				{ "id": "very_important", "label": "Very important." },
+				{ "id": "somewhat_important", "label": "Somewhat important." },
+				{ "id": "neutral", "label": "Not a big issue to me." },
+				{ "id": "not_important", "label": "It is not very important." }
+			]
+		},
+		{
+			"id": "q_007",
+			"prompt": "If a course had more trees and native plants, how would that affect your view of it?",
+			"options": [
+				{ "id": "positive", "label": "It would make it more attractive and valuable." },
+				{ "id": "mixed", "label": "It could help, but I would still care about the golf experience." },
+				{ "id": "not_matter", "label": "It would not matter much to me." },
+				{ "id": "negative", "label": "I would prefer it to stay more traditional." }
+			]
+		},
+		{
+			"id": "q_008",
+			"prompt": "Should a golf course be expected to support both recreation and community life?",
+			"options": [
+				{ "id": "yes_both", "label": "Yes, both should be considered." },
+				{ "id": "mostly_golf", "label": "Mostly golf, with limited community use." },
+				{ "id": "mostly_community", "label": "Mostly community use, with golf as a bonus." },
+				{ "id": "unsure", "label": "I am not sure." }
+			]
+		},
+		{
+			"id": "q_009",
+			"prompt": "How do you feel about golf courses being used for informal daily walking and gathering?",
+			"options": [
+				{ "id": "like_it", "label": "I would like that." },
+				{ "id": "depends", "label": "It depends on how the space is managed." },
+				{ "id": "neutral", "label": "I do not have a strong opinion." },
+				{ "id": "dislike_it", "label": "I would rather keep it for golf only." }
+			]
+		},
+		{
+			"id": "q_010",
+			"prompt": "Which statement best matches your ideal neighborhood green space?",
+			"options": [
+				{ "id": "shared_access", "label": "Shared public access that is welcoming to everyone." },
+				{ "id": "balanced", "label": "A balance of golf use and public use." },
+				{ "id": "golf_priority", "label": "Golf should be the priority, with public access limited." },
+				{ "id": "not_sure", "label": "I do not know yet." }
+			]
 		}
 	]
 }

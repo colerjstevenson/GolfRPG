@@ -21,7 +21,7 @@ enum State {
 @export var landing_bounce_height: float = 8.0
 @export var landing_bounce_duration: float = 0.18
 @export var friction: float = 350.0
-@export var max_putt_speed: float = 240.0
+@export var max_putt_speed: float = 420.0
 @export var green_friction: float = 180.0
 @export var wobble_max_angle_deg: float = 20.0
 @export var wobble_frequency: float = 6.0
@@ -88,8 +88,9 @@ func set_aim_preview(direction: Vector2, power_ratio: float) -> void:
 	if direction.length_squared() < 0.0001:
 		clear_aim_preview()
 		return
+	var max_power_ratio := _get_max_shot_power_ratio()
 	aim_dir = direction.normalized()
-	aim_power = clamp(power_ratio, 0.0, 1.0)
+	aim_power = clamp(power_ratio, 0.0, max_power_ratio)
 	aim_active = true
 	queue_redraw()
 
@@ -114,6 +115,14 @@ func sink(hole_position: Vector2) -> void:
 	state = State.IDLE
 	stopped.emit()
 	holed.emit()
+
+func _get_max_shot_power_ratio() -> float:
+	var terrain_name := get_terrain_name()
+	if terrain_name == "sand":
+		return 0.5
+	if terrain_name == "rough":
+		return 0.8
+	return 1.0
 
 func predicted_distance(power_ratio: float) -> float:
 	return clamp(power_ratio, 0.0, 1.0) * max_flight_distance
@@ -235,13 +244,14 @@ func predicted_putt_distance(power_ratio: float) -> float:
 	var putt_speed := clampf(power_ratio, 0.0, 1.0) * max_putt_speed
 	return putt_speed * putt_speed / (2.0 * maxf(green_friction, 0.001))
 
-func _get_wobble_angle(power_ratio: float) -> float:
-	var threshold := 0.9
-	var terrain_name := get_terrain_name()
-	if terrain_name == "rough":
-		threshold = 0.75
-	elif terrain_name == "sand":
-		threshold = 0.5
+func _get_wobble_angle(power_ratio: float, threshold: float = -1.0) -> float:
+	if threshold < 0.0:
+		threshold = 0.9
+		var terrain_name := get_terrain_name()
+		if terrain_name == "rough":
+			threshold = 0.75
+		elif terrain_name == "sand":
+			threshold = 0.5
 
 	var over := _get_wobble_over(power_ratio, threshold)
 	if over <= 0.0:
@@ -256,18 +266,25 @@ func _get_wobble_over(power_ratio: float, threshold: float = -1.0) -> float:
 		threshold = 0.9
 		var terrain_name := get_terrain_name()
 		if terrain_name == "rough":
-			threshold = 0.75
+			threshold = 0.55
 		elif terrain_name == "sand":
-			threshold = 0.5
+			threshold = 0.1
 	return clamp((power_ratio - threshold) / max(0.0001, 1.0 - threshold), 0.0, 1.0)
 
 func launch(direction: Vector2, power_ratio: float) -> void:
 	if direction.length_squared() < 0.0001:
 		return
 
+	CourseState.register_shot()
+
+	var max_power_ratio := _get_max_shot_power_ratio()
+	var shot_power := clampf(power_ratio, 0.0, max_power_ratio)
+
 	is_putting_shot = _is_on_green()
 	if is_putting_shot:
-		velocity = direction.normalized() * clampf(power_ratio, 0.0, 1.0) * max_putt_speed
+		var putt_wobble := _get_wobble_angle(shot_power, 0.4)
+		var putt_direction := direction.normalized().rotated(putt_wobble)
+		velocity = putt_direction * shot_power * max_putt_speed
 		landing_bounce_time = 0.0
 		landing_bounce_height_current = 0.0
 		landing_bounce_duration_current = 0.0
@@ -280,13 +297,13 @@ func launch(direction: Vector2, power_ratio: float) -> void:
 		queue_redraw()
 		return
 
-	var wobble := _get_wobble_angle(power_ratio)
+	var wobble := _get_wobble_angle(shot_power)
 	var final_direction := direction.normalized().rotated(wobble)
 	flight_start = global_position
-	flight_end = flight_start + final_direction * predicted_distance(power_ratio)
+	flight_end = flight_start + final_direction * predicted_distance(shot_power)
 	flight_time = 0.0
-	flight_duration = flight_duration_base * clampf(power_ratio, 0.35, 1.0)
-	flight_power = clampf(power_ratio, 0.0, 1.0)
+	flight_duration = flight_duration_base * clampf(shot_power, 0.35, 1.0)
+	flight_power = shot_power
 	state = State.FLYING
 	aim_active = false
 	aim_power = 0.0
@@ -304,7 +321,7 @@ func _draw() -> void:
 		return
 
 	var is_putting_preview := _is_on_green()
-	var preview_dir := aim_dir if is_putting_preview else aim_dir.rotated(_get_wobble_angle(aim_power))
+	var preview_dir := aim_dir.rotated(_get_wobble_angle(aim_power)) if not is_putting_preview else aim_dir.rotated(_get_wobble_angle(aim_power))
 	var pull_endpoint := preview_dir * aim_power * max_drag_px
 	var color := Color(0.2, 1.0, 0.3)
 	if aim_power > 0.5:
@@ -313,6 +330,7 @@ func _draw() -> void:
 		color = Color(1.0, 0.2, 0.2)
 
 	if is_putting_preview:
+		preview_dir = aim_dir.rotated(_get_wobble_angle(aim_power, 0.4))
 		draw_line(Vector2.ZERO, preview_dir * predicted_putt_distance(aim_power), color, 2.0)
 		return
 

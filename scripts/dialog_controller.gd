@@ -44,7 +44,14 @@ func open_for(npc: Node2D) -> void:
 	current_npc = npc
 	_reset_panel()
 
-	var npc_name := SurveyData.get_random_name()
+	var npc_name := ""
+	if npc != null:
+		if npc.has_method("get_npc_name"):
+			npc_name = npc.get_npc_name()
+		elif npc.get("npc_name") is String:
+			npc_name = str(npc.npc_name)
+	if npc_name.is_empty():
+		npc_name = SurveyData.get_random_name()
 	greeting_label.text = SurveyData.get_greeting_for(npc_name)
 	greeting_label.visible = true
 

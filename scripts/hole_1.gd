@@ -51,6 +51,9 @@ var focus_anchor_node: Node2D
 var focus_anchor_screen_position: Vector2
 
 func _ready() -> void:
+	CourseState.reset_hole()
+	_ensure_stroke_hud()
+
 	footprint_container = Node2D.new()
 	footprint_container.name = "Footprints"
 	footprint_container.z_index = 1
@@ -94,6 +97,7 @@ func _ready() -> void:
 	_fade_to(0.0, TRANSITION_DURATION)
 
 func _process(delta: float) -> void:
+	_update_stroke_hud()
 	follow_camera.zoom = follow_camera.zoom.lerp(
 		target_zoom,
 		clampf(delta * CAMERA_FOLLOW_SPEED, 0.0, 1.0)
@@ -216,6 +220,50 @@ func _set_world_input_enabled(enabled: bool) -> void:
 	ball.input_pickable = enabled
 	if rake_button != null:
 		rake_button.disabled = not enabled
+
+func _ensure_stroke_hud() -> void:
+	var canvas_layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	if canvas_layer == null:
+		return
+
+	var hud := canvas_layer.get_node_or_null("StrokeHud") as Label
+	if hud == null:
+		hud = Label.new()
+		hud.name = "StrokeHud"
+		hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		hud.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		hud.text = "Hole 1: 0 | Total: 0"
+		var stroke_font := load("res://assets/fonts/Delicatus.ttf") as FontFile
+		if stroke_font != null:
+			hud.add_theme_font_override("font", stroke_font)
+		hud.add_theme_font_size_override("font_size", 20)
+		hud.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+		hud.position = Vector2(0.0, 18.0)
+		hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		hud.offset_left = -180
+		hud.offset_top = 16
+		hud.offset_right = -18
+		hud.offset_bottom = 52
+		canvas_layer.add_child(hud)
+	_update_stroke_hud()
+
+func _update_stroke_hud() -> void:
+	var canvas_layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	if canvas_layer == null:
+		return
+	var hud := canvas_layer.get_node_or_null("StrokeHud") as Label
+	if hud == null:
+		return
+	var hole_number := _get_hole_number()
+	hud.text = "Hole %s: %d | Total: %d" % [str(hole_number), CourseState.hole_strokes, CourseState.total_strokes]
+
+func _get_hole_number() -> int:
+	var regex := RegEx.new()
+	regex.compile("(\\d+)(?=\\.tscn$)")
+	var result := regex.search(scene_file_path)
+	if result == null:
+		return 1
+	return int(result.get_string())
 
 func _transition_to_next_hole() -> void:
 	if next_hole_scene != null:

@@ -16,6 +16,8 @@ const ANIMATION_LAYOUT := {
 	"fallen": [Vector2i(176, 48)],
 }
 
+@export var npc_name: String = ""
+
 @export var sprite_sheet: Texture2D:
 	set = _set_sprite_sheet
 
@@ -52,6 +54,9 @@ var _was_patrolling_before_dialog: bool = false
 
 
 func _ready() -> void:
+	if npc_name.is_empty() and not Engine.is_editor_hint():
+		npc_name = SurveyData.get_random_name()
+
 	if sprite_sheet == null and not Engine.is_editor_hint():
 		if sprite_sheet_pool.is_empty():
 			push_warning("NPC has no sprite_sheet and an empty sprite_sheet_pool; keeping scene frames.")
@@ -82,6 +87,12 @@ func _on_input_event(viewport: Viewport, event: InputEvent, _shape_idx: int) -> 
 
 
 ## Freezes the NPC facing the camera for the duration of a conversation.
+func get_npc_name() -> String:
+	if npc_name.is_empty():
+		npc_name = SurveyData.get_random_name()
+	return npc_name
+
+
 func face_forward() -> void:
 	is_in_dialog = true
 	_was_patrolling_before_dialog = _is_patrolling
