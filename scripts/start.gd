@@ -190,10 +190,7 @@ func _spawn_missing_range_balls() -> void:
 func _connect_range_ball(ball_node: Node2D) -> void:
 	if ball_node == null or not (ball_node is Area2D):
 		return
-	if not ball_node.has_signal("stopped"):
-		return
-	if not ball_node.is_connected("stopped", _on_range_ball_stopped):
-		ball_node.stopped.connect(_on_range_ball_stopped.bind(ball_node))
+	_connect_ball(ball_node)
 
 func _on_range_ball_stopped(range_ball: Node2D) -> void:
 	if range_ball == null or not range_ball.has_meta("range_respawn_cell"):
