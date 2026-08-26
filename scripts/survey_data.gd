@@ -77,6 +77,11 @@ func record_answer(question_id: String, option_id: String, option_label: String,
 	answers.append(entry)
 	_save_answer_log()
 
+## Wipes the saved answer log, used when starting a new round.
+func clear_answers() -> void:
+	answers = []
+	_save_answer_log()
+
 
 func _refill_deck() -> void:
 	_question_deck = questions.duplicate()

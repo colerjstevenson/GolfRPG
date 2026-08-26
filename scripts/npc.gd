@@ -52,6 +52,7 @@ var _wait_timer: float = 0.0
 var _last_direction: String = "down"
 var is_knocked_down: bool = false
 var is_in_dialog: bool = false
+var has_talked_to: bool = false
 var _was_patrolling_before_dialog: bool = false
 
 
@@ -59,7 +60,7 @@ func _ready() -> void:
 	if npc_name.is_empty() and not Engine.is_editor_hint():
 		npc_name = SurveyData.get_random_name()
 
-	if sprite_sheet == null and not Engine.is_editor_hint():
+	if sprite_sheet == null:
 		if sprite_sheet_pool.is_empty():
 			push_warning("NPC has no sprite_sheet and an empty sprite_sheet_pool; keeping scene frames.")
 		else:

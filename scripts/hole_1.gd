@@ -22,8 +22,8 @@ const HOLE_MAX_ENTRY_SPEED := 120.0
 const ENTRY_ZOOM_MULTIPLIER := 1.25
 const EXIT_ZOOM_MULTIPLIER := 1.35
 const TRANSITION_DURATION := 0.4
-const START_SCENE_PATH := "res://Scenes/Start.tscn"
 const FIRST_HOLE_SCENE_PATH := "res://Scenes/Hole1.tscn"
+const END_SCENE_PATH := "res://Scenes/End.tscn"
 const NPC_DIALOG_ZOOM_MULTIPLIER := 2.2
 # Fraction of the viewport the NPC is pinned to while talking, so they sit large near the top.
 const NPC_SCREEN_ANCHOR_RATIO := Vector2(0.5, 0.14)
@@ -214,8 +214,10 @@ func _on_dialog_closed(npc: Node2D) -> void:
 	player.set_input_locked(false)
 	_set_world_input_enabled(true)
 	pending_npc = null
-	if npc != null and npc.has_method("resume_after_dialog"):
-		npc.resume_after_dialog()
+	if npc != null:
+		npc.has_talked_to = true
+		if npc.has_method("resume_after_dialog"):
+			npc.resume_after_dialog()
 
 func _set_world_input_enabled(enabled: bool) -> void:
 	ball.input_pickable = enabled
@@ -267,6 +269,7 @@ func _get_hole_number() -> int:
 	return int(result.get_string())
 
 func _transition_to_next_hole() -> void:
+	_tally_hole_results()
 	if scene_file_path.ends_with("Start.tscn"):
 		get_tree().change_scene_to_file(FIRST_HOLE_SCENE_PATH)
 		return
@@ -277,7 +280,17 @@ func _transition_to_next_hole() -> void:
 	if not next_path.is_empty() and ResourceLoader.exists(next_path):
 		get_tree().change_scene_to_file(next_path)
 		return
-	get_tree().change_scene_to_file(START_SCENE_PATH)
+	get_tree().change_scene_to_file(END_SCENE_PATH)
+
+## Records NPCs never talked to and whether footprints were left unraked, for the end-of-round score.
+func _tally_hole_results() -> void:
+	var missed_count := 0
+	for child in get_children():
+		if child.has_signal("clicked") and child.has_method("face_forward"):
+			if not bool(child.get("has_talked_to")):
+				missed_count += 1
+	var bunker_unswept := footprint_container != null and footprint_container.get_child_count() > 0
+	CourseState.register_hole_results(missed_count, bunker_unswept)
 
 # Finds "HoleN.tscn" for the current scene and returns "Hole(N+1).tscn"; empty if no number found.
 func _get_next_hole_scene_path() -> String:
