@@ -10873,5 +10873,6 @@ stretch_mode = 0
 
 [node name="CharacterBody2D" parent="." instance=ExtResource("14_4e2dm")]
 position = Vector2(112, 412)
+prompt = null
 
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]

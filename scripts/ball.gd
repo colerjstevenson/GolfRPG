@@ -251,7 +251,7 @@ func _get_wobble_angle(power_ratio: float, threshold: float = -1.0) -> float:
 		if terrain_name == "rough":
 			threshold = 0.75
 		elif terrain_name == "sand":
-			threshold = 0.5
+			threshold = 0.0
 
 	var over := _get_wobble_over(power_ratio, threshold)
 	if over <= 0.0:
@@ -268,7 +268,7 @@ func _get_wobble_over(power_ratio: float, threshold: float = -1.0) -> float:
 		if terrain_name == "rough":
 			threshold = 0.55
 		elif terrain_name == "sand":
-			threshold = 0.1
+			threshold = 0.0
 	return clamp((power_ratio - threshold) / max(0.0001, 1.0 - threshold), 0.0, 1.0)
 
 func launch(direction: Vector2, power_ratio: float) -> void:

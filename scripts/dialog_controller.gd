@@ -7,7 +7,7 @@ signal dialog_closed(npc: Node2D)
 const ADVANCE_GUARD_SECONDS := 0.25
 const ANSWER_GUARD_SECONDS := 0.3
 
-enum Phase { HIDDEN, GREETING, QUESTION, LOCKED }
+enum Phase { HIDDEN, GREETING, QUESTION, MESSAGE, LOCKED }
 
 @onready var greeting_label: RichTextLabel = $greeting
 @onready var question_label: RichTextLabel = $question
@@ -52,10 +52,15 @@ func open_for(npc: Node2D) -> void:
 			npc_name = str(npc.npc_name)
 	if npc_name.is_empty():
 		npc_name = SurveyData.get_random_name()
-	greeting_label.text = SurveyData.get_greeting_for(npc_name)
+	var npc_prompt: Variant = npc.get("prompt") if npc != null else null
+	if npc_prompt is String and not npc_prompt.strip_edges().is_empty():
+		greeting_label.text = npc_prompt
+		phase = Phase.MESSAGE
+	else:
+		greeting_label.text = SurveyData.get_greeting_for(npc_name)
+		phase = Phase.GREETING
 	greeting_label.visible = true
 
-	phase = Phase.GREETING
 	_start_guard(ADVANCE_GUARD_SECONDS)
 	visible = true
 
@@ -73,12 +78,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _is_advance_click(event: InputEvent) -> bool:
-	if phase != Phase.GREETING or _is_guarded():
+	if phase != Phase.GREETING and phase != Phase.MESSAGE or _is_guarded():
 		return false
 	return event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed
 
 
 func _show_question() -> void:
+	if phase == Phase.MESSAGE:
+		_close()
+		return
+
 	current_question = SurveyData.get_next_question()
 	greeting_label.visible = false
 	question_label.text = str(current_question.get("prompt", ""))

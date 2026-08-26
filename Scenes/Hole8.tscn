@@ -1,6 +1,7 @@
-[gd_scene load_steps=30 format=4 uid="uid://ji3rmsx74mhx"]
+[gd_scene load_steps=31 format=4 uid="uid://ji3rmsx74mhx"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_3y3mk"]
+[ext_resource type="PackedScene" uid="uid://dgpgp6galah3x" path="res://Scenes/hole9.tscn" id="2_m6ikt"]
 [ext_resource type="Texture2D" uid="uid://d4m7lkp3r3sbo" path="res://assets/tile-B-01.png" id="2_ullo1"]
 [ext_resource type="Texture2D" uid="uid://dcwjr0a1lot7c" path="res://assets/tile-B-02.png" id="3_m6ikt"]
 [ext_resource type="Texture2D" uid="uid://cqtdcpyqgh6d7" path="res://assets/tile-B-03.png" id="4_p4erp"]
@@ -10632,6 +10633,7 @@ point_count = 2
 
 [node name="Node2D2" type="Node2D"]
 script = ExtResource("1_3y3mk")
+next_hole_scene = ExtResource("2_m6ikt")
 
 [node name="ground" type="TileMapLayer" parent="."]
 texture_filter = 1
@@ -10843,6 +10845,7 @@ stretch_mode = 0
 
 [node name="CharacterBody2D" parent="." instance=ExtResource("14_o67cl")]
 position = Vector2(198, -27)
+prompt = null
 
 [node name="PatrolPath" parent="CharacterBody2D" index="0"]
 curve = SubResource("Curve2D_3y3mk")

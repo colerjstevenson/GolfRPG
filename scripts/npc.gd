@@ -39,6 +39,7 @@ enum PatrolMode { LOOP, PING_PONG, ONE_SHOT }
 @export var patrol_mode: PatrolMode = PatrolMode.LOOP
 @export var wait_time_at_point: float = 0.0
 @export var autostart_patrol: bool = true
+@export var prompt: String = ''
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 

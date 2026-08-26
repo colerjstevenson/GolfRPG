@@ -10872,6 +10872,7 @@ shape = SubResource("RectangleShape2D_o1g2h")
 
 [node name="NPC1" parent="." instance=ExtResource("11_bs618")]
 position = Vector2(560, 688)
+prompt = null
 
 [node name="PatrolPath" parent="NPC1" index="0"]
 position = Vector2(-38.4, 0)
