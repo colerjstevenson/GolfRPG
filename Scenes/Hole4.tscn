@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=4 uid="uid://bm61vwyoktgh5"]
+[gd_scene load_steps=37 format=4 uid="uid://bm61vwyoktgh5"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_kj8wp"]
 [ext_resource type="TileSet" uid="uid://b7db6wmfxgfqq" path="res://TilePaths.tres" id="2_gntkx"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://dutwq77dgdl7n" path="res://Scenes/Player.tscn" id="9_go2uo"]
 [ext_resource type="Texture2D" uid="uid://bpd1nxe31ty6q" path="res://assets/sprites/sprite3.png" id="10_gkl1s"]
 [ext_resource type="PackedScene" uid="uid://brmcm5xeeqnes" path="res://Scenes/ball.tscn" id="10_trtin"]
+[ext_resource type="PackedScene" uid="uid://c52gxwcdgmhs1" path="res://Scenes/Duck.tscn" id="11_gkl1s"]
 [ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="11_nbw0k"]
 [ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="12_b1xh7"]
 [ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="13_baay8"]
@@ -395,6 +396,9 @@ curve = SubResource("Curve2D_kj8wp")
 sprite_frames = SubResource("SpriteFrames_ke0t5")
 animation = &"down"
 frame_progress = 0.0
+
+[node name="CharacterBody2D2" parent="." instance=ExtResource("11_gkl1s")]
+position = Vector2(515, 524)
 
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=4 uid="uid://d0pko66uo7gxt"]
+[gd_scene load_steps=18 format=4 uid="uid://d0pko66uo7gxt"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_fpshg"]
 [ext_resource type="TileSet" uid="uid://b7db6wmfxgfqq" path="res://TilePaths.tres" id="2_s5t4t"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://brmcm5xeeqnes" path="res://Scenes/ball.tscn" id="10_o8xoh"]
 [ext_resource type="Texture2D" uid="uid://dlq5o4p81pn2a" path="res://assets/sprites/sprite6.png" id="10_xdjd8"]
 [ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="11_4xs2i"]
+[ext_resource type="PackedScene" uid="uid://c52gxwcdgmhs1" path="res://Scenes/Duck.tscn" id="11_xdjd8"]
 [ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="12_2opwy"]
 [ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="13_n4ul5"]
 [ext_resource type="PackedScene" uid="uid://bxuwl0nhn5asc" path="res://Scenes/NPC.tscn" id="14_4e2dm"]
@@ -237,5 +238,14 @@ stretch_mode = 0
 position = Vector2(112, 412)
 sprite_sheet = ExtResource("10_xdjd8")
 prompt = ""
+
+[node name="CharacterBody2D2" parent="." instance=ExtResource("11_xdjd8")]
+position = Vector2(109, 139)
+
+[node name="CharacterBody2D3" parent="." instance=ExtResource("11_xdjd8")]
+position = Vector2(144, 141)
+
+[node name="CharacterBody2D4" parent="." instance=ExtResource("11_xdjd8")]
+position = Vector2(183, 137)
 
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]
