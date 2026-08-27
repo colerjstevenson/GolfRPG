@@ -25,6 +25,7 @@ enum State {
 @export var ground_layer: TileMapLayer
 @export var ground_items_layer: TileMapLayer
 @export var footprint_parent: Node2D
+@export var knockback_friction: float = 420.0
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -40,6 +41,7 @@ var drag_dir: Vector2 = Vector2.ZERO
 var has_last_footprint: bool = false
 var last_footprint_position: Vector2
 var input_locked: bool = false
+var knockback_velocity: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	target_position = global_position
@@ -48,11 +50,11 @@ func _ready() -> void:
 	animated_sprite.pause()
 	add_to_group(&"player")
 
-## One-shot displacement used by things like a duck bumping into the player.
+## Impulse used by things like a duck bumping into the player; decays in _physics_process.
 func apply_knockback(direction: Vector2, strength: float) -> void:
 	if direction.length_squared() < 0.0001:
 		return
-	move_and_collide(direction.normalized() * strength)
+	knockback_velocity = direction.normalized() * strength
 
 func on_ball_clicked(ball: Node2D) -> void:
 	if state != State.FREE:
@@ -145,6 +147,14 @@ func _physics_process(delta: float) -> void:
 		state = State.FREE
 		current_ball = null
 		shot_mode_exited.emit()
+
+	# Knockback overrides walking for the few frames it takes to decay, but keeps the walk target.
+	if knockback_velocity.length_squared() > 1.0:
+		velocity = knockback_velocity
+		move_and_slide()
+		knockback_velocity = knockback_velocity.move_toward(Vector2.ZERO, knockback_friction * delta)
+		return
+	knockback_velocity = Vector2.ZERO
 
 	if not is_moving:
 		return

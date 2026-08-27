@@ -11,8 +11,10 @@ enum State { IDLE, WANDER, ALERT, FLEE, SWIM, CHASE }
 @export var alert_radius: float = 70.0
 @export var flee_clear_radius: float = 110.0
 @export var chase_give_up_radius: float = 160.0
-@export var bump_strength: float = 18.0
+@export var chase_duration: float = 8.0
+@export var bump_strength: float = 190.0
 @export var bump_cooldown: float = 1.0
+@export var slap_duration: float = 0.35
 @export var min_idle_time: float = 4.0
 @export var max_idle_time: float = 10.0
 @export var min_idle_action_interval: float = 5.0
@@ -33,6 +35,8 @@ var _has_wander_target: bool = false
 var _idle_timer: float = 0.0
 var _alert_timer: float = 0.0
 var _bump_cooldown_timer: float = 0.0
+var _chase_timer: float = 0.0
+var _slap_timer: float = 0.0
 var _random_action_timer: float = 0.0
 var _random_action_lock: float = 0.0
 var _player: Node2D = null
@@ -61,6 +65,11 @@ func knock_down() -> void:
 	if state == State.CHASE or _bump_cooldown_timer > 0.0:
 		return
 	state = State.CHASE
+	_chase_timer = chase_duration
+	_slap_timer = slap_duration
+	_has_wander_target = false
+	_random_action_lock = 0.0
+	velocity = Vector2.ZERO
 	_play("slap")
 
 
@@ -150,17 +159,25 @@ func _process_flee(_delta: float) -> void:
 	_move_toward(flee_target, flee_speed, "run")
 
 
-func _process_chase(_delta: float) -> void:
+func _process_chase(delta: float) -> void:
 	var player := _get_player()
 	if player == null:
-		state = State.WANDER
+		_end_chase()
 		return
 
-	var distance := global_position.distance_to(player.global_position)
-	if distance > chase_give_up_radius:
-		state = State.WANDER
+	if _slap_timer > 0.0:
+		_slap_timer -= delta
 		velocity = Vector2.ZERO
-		_update_idle_anim()
+		_play("slap")
+		_set_facing(player.global_position - global_position)
+		return
+
+	_chase_timer -= delta
+	var distance := global_position.distance_to(player.global_position)
+	# Only give up on distance once the angry-chase window has elapsed, otherwise a duck
+	# hit by a long shot would quit on the same frame it was knocked down.
+	if _chase_timer <= 0.0 and distance > chase_give_up_radius:
+		_end_chase()
 		return
 
 	var direction := (player.global_position - global_position)
@@ -178,19 +195,25 @@ func _process_chase(_delta: float) -> void:
 			if player.has_method("apply_knockback"):
 				player.apply_knockback(direction, bump_strength)
 			_bump_cooldown_timer = bump_cooldown
-			state = State.WANDER
-			velocity = Vector2.ZERO
-			_update_idle_anim()
+			_slap_timer = slap_duration
 		else:
 			for i in get_slide_collision_count():
 				var collider := get_slide_collision(i).get_collider()
 				if collider is Node and (collider as Node).is_in_group(&"player"):
 					(collider as Node).apply_knockback(direction, bump_strength)
 					_bump_cooldown_timer = bump_cooldown
-					state = State.WANDER
-					velocity = Vector2.ZERO
-					_update_idle_anim()
+					_slap_timer = slap_duration
 					break
+
+
+func _end_chase() -> void:
+	state = State.WANDER
+	_chase_timer = 0.0
+	_slap_timer = 0.0
+	_has_wander_target = false
+	velocity = Vector2.ZERO
+	_idle_timer = randf_range(min_idle_time, max_idle_time)
+	_update_idle_anim()
 
 
 func _process_swim(delta: float) -> void:
