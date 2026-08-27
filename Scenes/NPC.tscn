@@ -177,7 +177,7 @@ texture_filter = 1
 scale = Vector2(1.68359, 1.68359)
 sprite_frames = SubResource("SpriteFrames_r0hpd")
 animation = &"eroused"
-frame_progress = 0.955808
+frame_progress = 0.512527
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_br8wg")

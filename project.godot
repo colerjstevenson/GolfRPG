@@ -28,7 +28,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/moreterraintools/plugin.cfg")
+enabled=PackedStringArray("res://addons/SimpleTODO/plugin.cfg", "res://addons/auto_import/plugin.cfg", "res://addons/moreterraintools/plugin.cfg")
 
 [rendering]
 

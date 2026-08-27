@@ -15,6 +15,7 @@ enum State {
 }
 
 @export var speed: float = 100.0
+@export var bounce_speed_multiplier: float = 1.5
 @export var stand_distance: float = 24.0
 @export var footprint_spacing: float = 16.0
 @export var footprint_stride_side_offset: float = 2.5
@@ -45,6 +46,13 @@ func _ready() -> void:
 	animated_sprite.animation = last_direction
 	animated_sprite.frame = 0
 	animated_sprite.pause()
+	add_to_group(&"player")
+
+## One-shot displacement used by things like a duck bumping into the player.
+func apply_knockback(direction: Vector2, strength: float) -> void:
+	if direction.length_squared() < 0.0001:
+		return
+	move_and_collide(direction.normalized() * strength)
 
 func on_ball_clicked(ball: Node2D) -> void:
 	if state != State.FREE:
@@ -143,7 +151,8 @@ func _physics_process(delta: float) -> void:
 
 	var to_target := target_position - global_position
 	var distance := to_target.length()
-	var step := speed * delta
+	var current_speed := _get_movement_speed()
+	var step := current_speed * delta
 
 	if distance <= step:
 		var final_direction := to_target.normalized() if distance > 0.0001 else Vector2.DOWN
@@ -174,7 +183,7 @@ func _physics_process(delta: float) -> void:
 
 	var direction := to_target.normalized()
 	var previous_position := global_position
-	velocity = direction * speed
+	velocity = direction * current_speed
 	move_and_slide()
 	_update_animation(direction)
 	_maybe_place_footprint(direction)
@@ -221,6 +230,11 @@ func get_terrain_name() -> String:
 		return ground_terrain
 
 	return "fairway"
+
+func _get_movement_speed() -> float:
+	if get_terrain_name() == "bounce":
+		return speed * bounce_speed_multiplier
+	return speed
 
 func _get_terrain_name_at_position(layer: TileMapLayer) -> String:
 	return _get_terrain_name_at_global_position(global_position, layer)

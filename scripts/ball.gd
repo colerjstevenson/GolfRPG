@@ -201,6 +201,10 @@ func _land() -> void:
 		roll_factor = 0.05
 		bounce_factor = 0.25
 		friction = 900.0
+	elif terrain_name == "bounce":
+		roll_factor = 0.9
+		bounce_factor = 1.5
+		friction = 150.0
 	landing_bounce_height_current = clampf(incoming_speed * 0.02, 1.5, landing_bounce_height) * bounce_factor
 	landing_bounce_duration_current = landing_bounce_duration * bounce_factor
 	velocity = (flight_end - flight_start).normalized() * incoming_speed * roll_factor
@@ -235,6 +239,8 @@ func _get_roll_friction(terrain_name: String) -> float:
 		return 600.0
 	if terrain_name == "sand":
 		return 900.0
+	if terrain_name == "bounce":
+		return 150.0
 	return 350.0
 
 func _is_on_green() -> bool:
@@ -250,7 +256,7 @@ func _get_wobble_angle(power_ratio: float, threshold: float = -1.0) -> float:
 		var terrain_name := get_terrain_name()
 		if terrain_name == "rough":
 			threshold = 0.75
-		elif terrain_name == "sand":
+		elif terrain_name == "sand" or terrain_name == "bounce":
 			threshold = 0.0
 
 	var over := _get_wobble_over(power_ratio, threshold)
@@ -267,7 +273,7 @@ func _get_wobble_over(power_ratio: float, threshold: float = -1.0) -> float:
 		var terrain_name := get_terrain_name()
 		if terrain_name == "rough":
 			threshold = 0.55
-		elif terrain_name == "sand":
+		elif terrain_name == "sand" or terrain_name == "bounce":
 			threshold = 0.0
 	return clamp((power_ratio - threshold) / max(0.0001, 1.0 - threshold), 0.0, 1.0)
 

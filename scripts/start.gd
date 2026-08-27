@@ -228,7 +228,7 @@ func _get_range_ball_cell(world_position: Vector2) -> Variant:
 		var tile_data: TileData = layer.get_cell_tile_data(cell)
 		if tile_data == null:
 			continue
-		if bool(tile_data.get_custom_data(RANGE_BALL_CUSTOM_DATA_NAME)):
+		if tile_data.get_custom_data(RANGE_BALL_CUSTOM_DATA_NAME) == true:
 			return cell
 	return null
 
@@ -238,7 +238,7 @@ func _is_range_ball_cell(layer: TileMapLayer, cell: Vector2i) -> bool:
 	var tile_data: TileData = layer.get_cell_tile_data(cell)
 	if tile_data == null:
 		return false
-	return bool(tile_data.get_custom_data(RANGE_BALL_CUSTOM_DATA_NAME))
+	return tile_data.get_custom_data(RANGE_BALL_CUSTOM_DATA_NAME) == true
 
 func _has_range_ball_in_cell(cell: Vector2i, layer: TileMapLayer) -> bool:
 	if layer == null:

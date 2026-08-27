@@ -287,7 +287,7 @@ func _tally_hole_results() -> void:
 	var missed_count := 0
 	for child in get_children():
 		if child.has_signal("clicked") and child.has_method("face_forward"):
-			if not bool(child.get("has_talked_to")):
+			if child.get("has_talked_to") != true:
 				missed_count += 1
 	var bunker_unswept := footprint_container != null and footprint_container.get_child_count() > 0
 	CourseState.register_hole_results(missed_count, bunker_unswept)
