@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=4 uid="uid://kfyp5hurvu8l"]
+[gd_scene load_steps=19 format=4 uid="uid://kfyp5hurvu8l"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_vnupp"]
 [ext_resource type="TileSet" uid="uid://b7db6wmfxgfqq" path="res://TilePaths.tres" id="2_cwt70"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://c52gxwcdgmhs1" path="res://Scenes/Duck.tscn" id="11_6xycf"]
 [ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="11_7tffl"]
 [ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="12_duull"]
+[ext_resource type="PackedScene" uid="uid://oimq8c231jag" path="res://Scenes/sign.tscn" id="12_ocuus"]
 [ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="13_eahsq"]
 [ext_resource type="PackedScene" uid="uid://bxuwl0nhn5asc" path="res://Scenes/NPC.tscn" id="14_4s1be"]
 
@@ -249,5 +250,8 @@ position = Vector2(84, 132)
 [node name="CharacterBody2D4" parent="." instance=ExtResource("11_6xycf")]
 position = Vector2(374, 229)
 type = "baby"
+
+[node name="Node2D" parent="." instance=ExtResource("12_ocuus")]
+position = Vector2(17, 858)
 
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]

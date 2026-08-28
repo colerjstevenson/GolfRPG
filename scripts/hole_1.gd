@@ -35,7 +35,7 @@ enum TransitionPhase {
 	EXITING,
 }
 
-@export var next_hole_scene: PackedScene
+@export var next_hole_scene: PackedScene 
 
 var camera_target: Node2D
 var default_zoom: Vector2

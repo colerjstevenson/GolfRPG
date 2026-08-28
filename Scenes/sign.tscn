@@ -1,0 +1,66 @@
+[gd_scene load_steps=9 format=3 uid="uid://oimq8c231jag"]
+
+[ext_resource type="Script" uid="uid://dainvocs8dc17" path="res://Scripts/sign.gd" id="1_6c32n"]
+[ext_resource type="Texture2D" uid="uid://d4m7lkp3r3sbo" path="res://assets/tile-B-01.png" id="1_fmf1u"]
+[ext_resource type="Texture2D" uid="uid://0ojm8n2g0eag" path="res://assets/UI_Wood_Flat.png" id="2_hqvqy"]
+[ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="3_6c32n"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m6mpx"]
+atlas = ExtResource("1_fmf1u")
+region = Rect2(634.296, 720.425, 27.1047, 47.8784)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hqvqy"]
+size = Vector2(39, 68)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6c32n"]
+atlas = ExtResource("2_hqvqy")
+region = Rect2(-0.147987, 223.621, 160.64, 160.245)
+
+[sub_resource type="Theme" id="Theme_u6bny"]
+RichTextLabel/colors/default_color = Color(0, 0, 0, 1)
+RichTextLabel/font_sizes/normal_font_size = 36
+RichTextLabel/fonts/normal_font = ExtResource("3_6c32n")
+
+[node name="Node2D" type="Area2D"]
+script = ExtResource("1_6c32n")
+
+[node name="sign" type="TextureRect" parent="."]
+texture_filter = 1
+offset_left = -14.0
+offset_top = -20.0
+offset_right = 13.0
+offset_bottom = 27.0
+texture = SubResource("AtlasTexture_m6mpx")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
+position = Vector2(0.5, 4)
+shape = SubResource("RectangleShape2D_hqvqy")
+
+[node name="Dialog" type="TextureRect" parent="."]
+visible = false
+texture_filter = 1
+offset_left = -31.0
+offset_top = -72.0
+offset_right = 31.0
+offset_bottom = -23.0
+texture = SubResource("AtlasTexture_6c32n")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="text" type="RichTextLabel" parent="Dialog"]
+texture_filter = 1
+texture_repeat = 1
+layout_mode = 0
+offset_left = -4.0
+offset_top = -5.0
+offset_right = 68.0
+offset_bottom = 54.0
+mouse_filter = 2
+theme = SubResource("Theme_u6bny")
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/normal_font_size = 23
+text = "Hole 1
+Par 3"
+horizontal_alignment = 1
+vertical_alignment = 1

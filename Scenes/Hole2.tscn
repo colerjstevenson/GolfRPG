@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=4 uid="uid://keqyutfcomg7"]
+[gd_scene load_steps=39 format=4 uid="uid://keqyutfcomg7"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_xepid"]
 [ext_resource type="PackedScene" uid="uid://d0haoebdd17sb" path="res://Scenes/Hole3.tscn" id="2_1lcdo"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://bxuwl0nhn5asc" path="res://Scenes/NPC.tscn" id="12_1lcdo"]
 [ext_resource type="PackedScene" uid="uid://c52gxwcdgmhs1" path="res://Scenes/Duck.tscn" id="12_76trt"]
 [ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="12_u3tw4"]
+[ext_resource type="PackedScene" uid="uid://oimq8c231jag" path="res://Scenes/sign.tscn" id="13_76trt"]
 [ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="13_ii10o"]
 [ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="14_3p613"]
 
@@ -407,6 +408,10 @@ type = "female"
 [node name="CharacterBody2D3" parent="." instance=ExtResource("12_76trt")]
 position = Vector2(252, 574)
 type = "baby"
+
+[node name="Node2D" parent="." instance=ExtResource("13_76trt")]
+position = Vector2(-17, 843)
+hole = 2
 
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=4 uid="uid://br8p4j1ulg7rl"]
+[gd_scene load_steps=38 format=4 uid="uid://br8p4j1ulg7rl"]
 
 [ext_resource type="Script" uid="uid://bxdxmqybq8fa0" path="res://scripts/hole_1.gd" id="1_226c1"]
 [ext_resource type="TileSet" uid="uid://b7db6wmfxgfqq" path="res://TilePaths.tres" id="2_o1g2h"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://c52gxwcdgmhs1" path="res://Scenes/Duck.tscn" id="11_kxars"]
 [ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="11_rmqup"]
 [ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="12_kxars"]
+[ext_resource type="PackedScene" uid="uid://oimq8c231jag" path="res://Scenes/sign.tscn" id="12_rmqup"]
 [ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="13_dialog"]
 [ext_resource type="Texture2D" uid="uid://cnp6c8jksxrfk" path="res://assets/sprites/sprite5.png" id="15_e4y1m"]
 
@@ -404,6 +405,9 @@ position = Vector2(78, 599)
 type = "female"
 ground_layer = NodePath("../ground")
 ground_items_layer = NodePath("../ground_items")
+
+[node name="Node2D" parent="." instance=ExtResource("12_rmqup")]
+position = Vector2(-11, 840)
 
 [connection signal="pressed" from="Rake" to="." method="_on_rake_pressed"]
 

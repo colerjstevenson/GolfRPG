@@ -142,6 +142,9 @@ func _physics_process(delta: float) -> void:
 	_update_landing_bounce(delta)
 	position += velocity * delta
 	var terrain_name := get_terrain_name()
+	if _is_water_terrain(terrain_name) or _is_out_of_bounds_terrain(terrain_name):
+		_reset_to_flight_start()
+		return
 	_update_roll_terrain_effects(terrain_name)
 	var rolling_friction := _get_roll_friction(terrain_name)
 	velocity = velocity.move_toward(Vector2.ZERO, rolling_friction * delta)
@@ -182,13 +185,8 @@ func _land() -> void:
 	ball_sprite.scale = base_sprite_scale
 	landing_bounce_time = 0.0
 	var terrain_name := get_terrain_name()
-	if terrain_name.contains("water") or (terrain_name.contains("out") and terrain_name.contains("bounds")):
-		global_position = flight_start
-		ball_sprite.position = base_sprite_position
-		ball_sprite.scale = base_sprite_scale
-		velocity = Vector2.ZERO
-		state = State.IDLE
-		stopped.emit()
+	if _is_water_terrain(terrain_name) or _is_out_of_bounds_terrain(terrain_name):
+		_reset_to_flight_start()
 		return
 
 	var incoming_speed := predicted_distance(flight_power) / maxf(flight_duration, 0.001)
@@ -213,6 +211,26 @@ func _update_roll_terrain_effects(terrain_name: String) -> void:
 	if terrain_name == "bounce" and last_roll_terrain_name != "bounce":
 		_start_roll_bounce(velocity.length())
 	last_roll_terrain_name = terrain_name
+
+func _is_water_terrain(terrain_name: String) -> bool:
+	return terrain_name.contains("water")
+
+func _is_out_of_bounds_terrain(terrain_name: String) -> bool:
+	return terrain_name.contains("out") and terrain_name.contains("bounds")
+
+## Recovers the ball to where its current shot began, for landing or rolling into a hazard.
+func _reset_to_flight_start() -> void:
+	global_position = flight_start
+	ball_sprite.position = base_sprite_position
+	ball_sprite.scale = base_sprite_scale
+	velocity = Vector2.ZERO
+	landing_bounce_time = 0.0
+	landing_bounce_height_current = 0.0
+	landing_bounce_duration_current = 0.0
+	last_roll_terrain_name = ""
+	is_putting_shot = false
+	state = State.IDLE
+	stopped.emit()
 
 func _start_roll_bounce(incoming_speed: float) -> void:
 	landing_bounce_time = 0.0
