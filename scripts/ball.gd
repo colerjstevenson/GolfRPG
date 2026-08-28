@@ -48,6 +48,7 @@ var landing_bounce_duration_current: float = 0.0
 var base_sprite_position: Vector2
 var base_sprite_scale: Vector2
 var is_putting_shot: bool = false
+var last_roll_terrain_name: String = ""
 
 func _ready() -> void:
 	input_pickable = true
@@ -140,15 +141,16 @@ func _physics_process(delta: float) -> void:
 
 	_update_landing_bounce(delta)
 	position += velocity * delta
-	var rolling_friction := friction
-	if is_putting_shot:
-		rolling_friction = _get_roll_friction(get_terrain_name())
+	var terrain_name := get_terrain_name()
+	_update_roll_terrain_effects(terrain_name)
+	var rolling_friction := _get_roll_friction(terrain_name)
 	velocity = velocity.move_toward(Vector2.ZERO, rolling_friction * delta)
 
 	if velocity.length() <= 1.0:
 		velocity = Vector2.ZERO
 		state = State.IDLE
 		is_putting_shot = false
+		last_roll_terrain_name = ""
 		stopped.emit()
 
 func _update_landing_bounce(delta: float) -> void:
@@ -192,23 +194,30 @@ func _land() -> void:
 	var incoming_speed := predicted_distance(flight_power) / maxf(flight_duration, 0.001)
 	var roll_factor := 0.5
 	var bounce_factor := 1.0
-	friction = 350.0
 	if terrain_name == "rough":
 		roll_factor = 0.2
 		bounce_factor = 0.65
-		friction = 600.0
 	elif terrain_name == "sand":
 		roll_factor = 0.05
 		bounce_factor = 0.25
-		friction = 900.0
 	elif terrain_name == "bounce":
 		roll_factor = 0.9
 		bounce_factor = 1.5
-		friction = 150.0
 	landing_bounce_height_current = clampf(incoming_speed * 0.02, 1.5, landing_bounce_height) * bounce_factor
 	landing_bounce_duration_current = landing_bounce_duration * bounce_factor
 	velocity = (flight_end - flight_start).normalized() * incoming_speed * roll_factor
+	last_roll_terrain_name = terrain_name
 	state = State.ROLLING
+
+func _update_roll_terrain_effects(terrain_name: String) -> void:
+	if terrain_name == "bounce" and last_roll_terrain_name != "bounce":
+		_start_roll_bounce(velocity.length())
+	last_roll_terrain_name = terrain_name
+
+func _start_roll_bounce(incoming_speed: float) -> void:
+	landing_bounce_time = 0.0
+	landing_bounce_height_current = clampf(incoming_speed * 0.02, 1.5, landing_bounce_height)
+	landing_bounce_duration_current = landing_bounce_duration
 
 func get_terrain_name() -> String:
 	var ground_items_terrain := _get_terrain_name_at_position(ground_items_layer)
@@ -241,7 +250,7 @@ func _get_roll_friction(terrain_name: String) -> float:
 		return 900.0
 	if terrain_name == "bounce":
 		return 150.0
-	return 350.0
+	return friction
 
 func _is_on_green() -> bool:
 	return get_terrain_name() == "green"
