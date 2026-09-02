@@ -1,15 +1,16 @@
 extends Node2D
 
 @onready var ground: TileMapLayer = $ground
-@onready var ground_items: TileMapLayer = $ground_items
+@onready var tree: TileMapLayer = get_node_or_null("trees") as TileMapLayer
+@onready var ground_items: TileMapLayer = $ground_items_community
 @onready var follow_camera: Camera2D = $FollowCamera
 @onready var player: CharacterBody2D = $Player
 @onready var ball: Area2D = $Ball
 @onready var hole: Area2D = $Hole
 @onready var entrance: Area2D = $entrance
 @onready var exit: Area2D = $exit
-@onready var fade_overlay: ColorRect = $CanvasLayer/FadeOverlay
-@onready var dialog: TextureRect = $CanvasLayer/Dialog
+@onready var fade_overlay: ColorRect = $HUD/FadeOverlay
+@onready var dialog: TextureRect = $HUD/Dialog
 @onready var rake_button: TextureButton = %Rake
 
 const BASE_CAMERA_ZOOM := 2.0
@@ -62,8 +63,10 @@ func _ready() -> void:
 
 	ball.ground_layer = ground
 	ball.ground_items_layer = ground_items
+	ball.tree_layer = tree
 	player.ground_layer = ground
 	player.ground_items_layer = ground_items
+	player.tree_layer = tree
 	player.footprint_parent = footprint_container
 	ball.clicked.connect(player.on_ball_clicked)
 	ball.flight_started.connect(_on_flight_started)
@@ -89,6 +92,7 @@ func _ready() -> void:
 	default_zoom = target_zoom
 	player_entry_start = player.global_position
 	player.global_position = entrance.global_position
+	_add_rough_details()
 	if fade_overlay != null:
 		fade_overlay.color = Color(0.0, 0.0, 0.0, 1.0)
 		fade_overlay.visible = true
@@ -225,7 +229,7 @@ func _set_world_input_enabled(enabled: bool) -> void:
 		rake_button.disabled = not enabled
 
 func _ensure_stroke_hud() -> void:
-	var canvas_layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	var canvas_layer := get_node_or_null("HUD") as CanvasLayer
 	if canvas_layer == null:
 		return
 
@@ -251,7 +255,7 @@ func _ensure_stroke_hud() -> void:
 	_update_stroke_hud()
 
 func _update_stroke_hud() -> void:
-	var canvas_layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	var canvas_layer := get_node_or_null("HUD") as CanvasLayer
 	if canvas_layer == null:
 		return
 	var hud := canvas_layer.get_node_or_null("StrokeHud") as Label
@@ -370,3 +374,39 @@ func _set_camera_limits() -> void:
 
 	default_zoom = Vector2.ONE * BASE_CAMERA_ZOOM
 	follow_camera.zoom = default_zoom
+
+
+
+func _collect_rough_detail_cells() -> Array[Dictionary]:
+	var detail_cells: Array[Dictionary] = []
+	for source_index in ground.tile_set.get_source_count():
+		var source_id := ground.tile_set.get_source_id(source_index)
+		var atlas_source := ground.tile_set.get_source(source_id) as TileSetAtlasSource
+		if atlas_source == null:
+			continue
+		for tile_index in atlas_source.get_tiles_count():
+			var atlas_coords := atlas_source.get_tile_id(tile_index)
+			for alternative_tile in atlas_source.get_alternative_tiles_count(atlas_coords):
+				var alternative_id := atlas_source.get_alternative_tile_id(atlas_coords, alternative_tile)
+				var tile_data := atlas_source.get_tile_data(atlas_coords, alternative_id)
+				if tile_data.get_custom_data("rough details"):
+					detail_cells.append({
+						"source_id": source_id,
+						"atlas_coords": atlas_coords,
+						"alternative_tile": alternative_id,
+					})
+	return detail_cells
+
+func _add_rough_details() -> void:
+	var detail_chance := 0.4
+	var detail_cells = _collect_rough_detail_cells()
+
+	#swap out some of the rough tiles for rough detail tiles
+	for cell_position in ground.get_used_cells():
+		var tile_data := ground.get_cell_tile_data(cell_position)
+		if tile_data == null:
+			continue
+
+		if tile_data.get_custom_data("rough") == true and randf() < detail_chance:
+			var cell = detail_cells[randi() % detail_cells.size()]
+			ground.set_cell(cell_position, cell["source_id"], cell["atlas_coords"], cell["alternative_tile"])

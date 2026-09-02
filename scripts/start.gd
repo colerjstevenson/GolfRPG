@@ -8,8 +8,8 @@ extends Node2D
 @onready var hole: Area2D = $Hole
 @onready var entrance: Area2D = $entrance
 @onready var exit: Area2D = $exit
-@onready var fade_overlay: ColorRect = $CanvasLayer/FadeOverlay
-@onready var dialog: TextureRect = $CanvasLayer/Dialog
+@onready var fade_overlay: ColorRect = $HUD/FadeOverlay
+@onready var dialog: TextureRect = $HUD/Dialog
 @onready var rake_button: TextureButton = %Rake
 
 const BASE_CAMERA_ZOOM := 2.0
@@ -338,7 +338,7 @@ func _set_world_input_enabled(enabled: bool) -> void:
 		rake_button.disabled = not enabled
 
 func _ensure_stroke_hud() -> void:
-	var canvas_layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	var canvas_layer := get_node_or_null("HUD") as CanvasLayer
 	if canvas_layer == null:
 		return
 
@@ -364,7 +364,7 @@ func _ensure_stroke_hud() -> void:
 	_update_stroke_hud()
 
 func _update_stroke_hud() -> void:
-	var canvas_layer := get_node_or_null("CanvasLayer") as CanvasLayer
+	var canvas_layer := get_node_or_null("HUD") as CanvasLayer
 	if canvas_layer == null:
 		return
 	var hud := canvas_layer.get_node_or_null("StrokeHud") as Label

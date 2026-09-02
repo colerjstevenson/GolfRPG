@@ -24,6 +24,7 @@ enum State {
 @export var footprint_color: Color = Color(0.24, 0.16, 0.09, 0.35)
 @export var ground_layer: TileMapLayer
 @export var ground_items_layer: TileMapLayer
+@export var tree_layer: TileMapLayer
 @export var footprint_parent: Node2D
 @export var knockback_friction: float = 420.0
 
@@ -231,6 +232,10 @@ func _update_animation(direction: Vector2) -> void:
 		animated_sprite.play(anim_name)
 
 func get_terrain_name() -> String:
+	var tree_terrain := _get_terrain_name_at_position(tree_layer)
+	if not tree_terrain.is_empty():
+		return tree_terrain
+
 	var ground_items_terrain := _get_terrain_name_at_position(ground_items_layer)
 	if not ground_items_terrain.is_empty():
 		return ground_items_terrain
@@ -303,6 +308,10 @@ func _can_place_footprint(direction: Vector2) -> bool:
 	return true
 
 func _is_sand_at_position(sample_position: Vector2) -> bool:
+	var tree_terrain := _get_terrain_name_at_global_position(sample_position, tree_layer)
+	if not tree_terrain.is_empty():
+		return tree_terrain == "sand"
+
 	var ground_items_terrain := _get_terrain_name_at_global_position(sample_position, ground_items_layer)
 	if not ground_items_terrain.is_empty():
 		return ground_items_terrain == "sand"

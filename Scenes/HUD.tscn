@@ -1,0 +1,284 @@
+[gd_scene load_steps=10 format=3 uid="uid://cojwij3ukvpn3"]
+
+[ext_resource type="Texture2D" uid="uid://bpeldmsoydjga" path="res://assets/UI_Paper.png" id="1_psnte"]
+[ext_resource type="Script" uid="uid://cr7fj70qbelk0" path="res://scripts/dialog_controller.gd" id="2_s3jbq"]
+[ext_resource type="FontFile" uid="uid://bg80guk3dae8d" path="res://assets/fonts/Delicatus.ttf" id="3_c3eba"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kxars"]
+atlas = ExtResource("1_psnte")
+region = Rect2(31.7256, 30.6868, 96.6943, 98.3907)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wnon8"]
+atlas = ExtResource("1_psnte")
+region = Rect2(447.589, 191.333, 65.3111, 33.9278)
+
+[sub_resource type="Theme" id="Theme_wnon8"]
+RichTextLabel/colors/default_color = Color(0, 0, 0, 1)
+RichTextLabel/font_sizes/normal_font_size = 36
+RichTextLabel/fonts/normal_font = ExtResource("3_c3eba")
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_psnte"]
+atlas = ExtResource("1_psnte")
+region = Rect2(31.7256, 30.6868, 96.6943, 98.3907)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s3jbq"]
+atlas = ExtResource("1_psnte")
+region = Rect2(447.589, 191.333, 65.3111, 33.9278)
+
+[sub_resource type="Theme" id="Theme_c3eba"]
+RichTextLabel/colors/default_color = Color(0, 0, 0, 1)
+RichTextLabel/font_sizes/normal_font_size = 36
+RichTextLabel/fonts/normal_font = ExtResource("3_c3eba")
+
+[node name="HUD" type="CanvasLayer"]
+
+[node name="FadeOverlay" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="CorporateOverlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.341176, 0.333333, 0.341176, 0.439216)
+
+[node name="Dialog" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+texture_filter = 1
+offset_left = 8.0
+offset_top = 233.0
+offset_right = 616.0
+offset_bottom = 951.0
+texture = SubResource("AtlasTexture_kxars")
+script = ExtResource("2_s3jbq")
+
+[node name="Option1" type="TextureButton" parent="Dialog"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 215.0
+offset_right = 516.0
+offset_bottom = 313.0
+texture_normal = SubResource("AtlasTexture_wnon8")
+stretch_mode = 0
+
+[node name="text" type="RichTextLabel" parent="Dialog/Option1"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 22.0
+offset_top = 17.0
+offset_right = 404.0
+offset_bottom = 85.0
+mouse_filter = 2
+theme = SubResource("Theme_wnon8")
+text = "option 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Option2" type="TextureButton" parent="Dialog"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 320.0
+offset_right = 516.0
+offset_bottom = 418.0
+texture_normal = SubResource("AtlasTexture_wnon8")
+stretch_mode = 0
+
+[node name="text" type="RichTextLabel" parent="Dialog/Option2"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 22.0
+offset_top = 17.0
+offset_right = 402.0
+offset_bottom = 83.0
+mouse_filter = 2
+theme = SubResource("Theme_wnon8")
+text = "option 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Option3" type="TextureButton" parent="Dialog"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 429.0
+offset_right = 516.0
+offset_bottom = 527.0
+texture_normal = SubResource("AtlasTexture_wnon8")
+stretch_mode = 0
+
+[node name="text" type="RichTextLabel" parent="Dialog/Option3"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 22.0
+offset_top = 17.0
+offset_right = 402.0
+offset_bottom = 83.0
+mouse_filter = 2
+theme = SubResource("Theme_wnon8")
+text = "option 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Option4" type="TextureButton" parent="Dialog"]
+layout_mode = 0
+offset_left = 84.0
+offset_top = 534.0
+offset_right = 516.0
+offset_bottom = 632.0
+texture_normal = SubResource("AtlasTexture_wnon8")
+stretch_mode = 0
+
+[node name="text" type="RichTextLabel" parent="Dialog/Option4"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 22.0
+offset_top = 17.0
+offset_right = 402.0
+offset_bottom = 83.0
+mouse_filter = 2
+theme = SubResource("Theme_wnon8")
+text = "option 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="question" type="RichTextLabel" parent="Dialog"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 65.0
+offset_top = 65.0
+offset_right = 544.0
+offset_bottom = 200.0
+mouse_filter = 2
+theme = SubResource("Theme_wnon8")
+text = "question"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="greeting" type="RichTextLabel" parent="Dialog"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 65.0
+offset_top = 65.0
+offset_right = 544.0
+offset_bottom = 652.0
+mouse_filter = 2
+theme = SubResource("Theme_wnon8")
+theme_override_font_sizes/normal_font_size = 64
+text = "greeting"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Score" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+texture_filter = 1
+offset_left = 8.0
+offset_top = 10.0
+offset_right = 616.0
+offset_bottom = 951.0
+texture = SubResource("AtlasTexture_psnte")
+
+[node name="NewRound" type="TextureButton" parent="Score"]
+layout_mode = 0
+offset_left = 82.0
+offset_top = 762.0
+offset_right = 514.0
+offset_bottom = 860.0
+texture_normal = SubResource("AtlasTexture_s3jbq")
+stretch_mode = 0
+
+[node name="text" type="RichTextLabel" parent="Score/NewRound"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 22.0
+offset_top = 18.0
+offset_right = 404.0
+offset_bottom = 86.0
+mouse_filter = 2
+theme = SubResource("Theme_c3eba")
+text = "New Round"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="greeting" type="RichTextLabel" parent="Score"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 60.0
+offset_top = 49.0
+offset_right = 539.0
+offset_bottom = 225.0
+mouse_filter = 2
+theme = SubResource("Theme_c3eba")
+theme_override_font_sizes/normal_font_size = 94
+text = "Round Score"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Strokes" type="RichTextLabel" parent="Score"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 63.0
+offset_top = 223.0
+offset_right = 542.0
+offset_bottom = 314.0
+mouse_filter = 2
+theme = SubResource("Theme_c3eba")
+theme_override_font_sizes/normal_font_size = 64
+text = "Strokes: 36"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Questions" type="RichTextLabel" parent="Score"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 61.0
+offset_top = 326.0
+offset_right = 540.0
+offset_bottom = 417.0
+mouse_filter = 2
+theme = SubResource("Theme_c3eba")
+theme_override_font_sizes/normal_font_size = 64
+bbcode_enabled = true
+text = "Questions Missed: 5"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Bunkers" type="RichTextLabel" parent="Score"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 66.0
+offset_top = 439.0
+offset_right = 545.0
+offset_bottom = 530.0
+mouse_filter = 2
+theme = SubResource("Theme_c3eba")
+theme_override_font_sizes/normal_font_size = 64
+bbcode_enabled = true
+text = "Unraked Bunkers: 6"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Final" type="RichTextLabel" parent="Score"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 68.0
+offset_top = 566.0
+offset_right = 547.0
+offset_bottom = 725.0
+mouse_filter = 2
+theme = SubResource("Theme_c3eba")
+theme_override_font_sizes/normal_font_size = 72
+bbcode_enabled = true
+text = "Final Score:
+47"
+horizontal_alignment = 1
+vertical_alignment = 1

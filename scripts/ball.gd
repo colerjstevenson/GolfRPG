@@ -29,8 +29,11 @@ enum State {
 @export var npc_hit_min_speed: float = 40.0
 @export var ground_layer: TileMapLayer
 @export var ground_items_layer: TileMapLayer
+@export var tree_layer: TileMapLayer
 
 @onready var ball_sprite: Sprite2D = $Sprite2D
+
+const BOUNCE_DATA_LAYER := &"bounce"
 
 var velocity: Vector2 = Vector2.ZERO
 var state: int = State.IDLE
@@ -48,7 +51,7 @@ var landing_bounce_duration_current: float = 0.0
 var base_sprite_position: Vector2
 var base_sprite_scale: Vector2
 var is_putting_shot: bool = false
-var last_roll_terrain_name: String = ""
+var last_roll_on_bounce_surface: bool = false
 
 func _ready() -> void:
 	input_pickable = true
@@ -145,15 +148,15 @@ func _physics_process(delta: float) -> void:
 	if _is_water_terrain(terrain_name) or _is_out_of_bounds_terrain(terrain_name):
 		_reset_to_flight_start()
 		return
-	_update_roll_terrain_effects(terrain_name)
-	var rolling_friction := _get_roll_friction(terrain_name)
+	_update_roll_bounce_effects()
+	var rolling_friction := _get_roll_friction(terrain_name, _is_on_bounce_surface())
 	velocity = velocity.move_toward(Vector2.ZERO, rolling_friction * delta)
 
 	if velocity.length() <= 1.0:
 		velocity = Vector2.ZERO
 		state = State.IDLE
 		is_putting_shot = false
-		last_roll_terrain_name = ""
+		last_roll_on_bounce_surface = false
 		stopped.emit()
 
 func _update_landing_bounce(delta: float) -> void:
@@ -192,25 +195,27 @@ func _land() -> void:
 	var incoming_speed := predicted_distance(flight_power) / maxf(flight_duration, 0.001)
 	var roll_factor := 0.5
 	var bounce_factor := 1.0
+	var is_on_bounce_surface := _is_on_bounce_surface()
 	if terrain_name == "rough":
 		roll_factor = 0.2
 		bounce_factor = 0.65
 	elif terrain_name == "sand":
 		roll_factor = 0.05
 		bounce_factor = 0.25
-	elif terrain_name == "bounce":
+	elif is_on_bounce_surface:
 		roll_factor = 0.9
 		bounce_factor = 1.5
 	landing_bounce_height_current = clampf(incoming_speed * 0.02, 1.5, landing_bounce_height) * bounce_factor
 	landing_bounce_duration_current = landing_bounce_duration * bounce_factor
 	velocity = (flight_end - flight_start).normalized() * incoming_speed * roll_factor
-	last_roll_terrain_name = terrain_name
+	last_roll_on_bounce_surface = is_on_bounce_surface
 	state = State.ROLLING
 
-func _update_roll_terrain_effects(terrain_name: String) -> void:
-	if terrain_name == "bounce" and last_roll_terrain_name != "bounce":
+func _update_roll_bounce_effects() -> void:
+	var is_on_bounce_surface := _is_on_bounce_surface()
+	if is_on_bounce_surface and not last_roll_on_bounce_surface:
 		_start_roll_bounce(velocity.length())
-	last_roll_terrain_name = terrain_name
+	last_roll_on_bounce_surface = is_on_bounce_surface
 
 func _is_water_terrain(terrain_name: String) -> bool:
 	return terrain_name.contains("water")
@@ -227,7 +232,7 @@ func _reset_to_flight_start() -> void:
 	landing_bounce_time = 0.0
 	landing_bounce_height_current = 0.0
 	landing_bounce_duration_current = 0.0
-	last_roll_terrain_name = ""
+	last_roll_on_bounce_surface = false
 	is_putting_shot = false
 	state = State.IDLE
 	stopped.emit()
@@ -238,6 +243,10 @@ func _start_roll_bounce(incoming_speed: float) -> void:
 	landing_bounce_duration_current = landing_bounce_duration
 
 func get_terrain_name() -> String:
+	var tree_terrain := _get_terrain_name_at_position(tree_layer)
+	if not tree_terrain.is_empty():
+		return tree_terrain
+
 	var ground_items_terrain := _get_terrain_name_at_position(ground_items_layer)
 	if not ground_items_terrain.is_empty():
 		return ground_items_terrain
@@ -259,14 +268,27 @@ func _get_terrain_name_at_position(layer: TileMapLayer) -> String:
 
 	return layer.tile_set.get_terrain_name(0, tile_data.terrain).to_lower()
 
-func _get_roll_friction(terrain_name: String) -> float:
+func _is_on_bounce_surface() -> bool:
+	return _has_custom_data_at_position(tree_layer, BOUNCE_DATA_LAYER) \
+		or _has_custom_data_at_position(ground_items_layer, BOUNCE_DATA_LAYER) \
+		or _has_custom_data_at_position(ground_layer, BOUNCE_DATA_LAYER)
+
+func _has_custom_data_at_position(layer: TileMapLayer, data_layer: StringName) -> bool:
+	if layer == null:
+		return false
+
+	var cell := layer.local_to_map(layer.to_local(global_position))
+	var tile_data := layer.get_cell_tile_data(cell)
+	return tile_data != null and bool(tile_data.get_custom_data(data_layer))
+
+func _get_roll_friction(terrain_name: String, is_on_bounce_surface: bool) -> float:
 	if terrain_name == "green":
 		return green_friction
 	if terrain_name == "rough":
 		return 600.0
 	if terrain_name == "sand":
 		return 900.0
-	if terrain_name == "bounce":
+	if is_on_bounce_surface:
 		return 150.0
 	return friction
 

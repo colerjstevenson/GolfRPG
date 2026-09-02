@@ -5,11 +5,11 @@ extends Node2D
 const START_SCENE_PATH := "res://Scenes/Start.tscn"
 const COUNT_DURATION := 1.0
 
-@onready var strokes_label: RichTextLabel = $CanvasLayer/Dialog/Strokes
-@onready var questions_label: RichTextLabel = $CanvasLayer/Dialog/Questions
-@onready var bunkers_label: RichTextLabel = $CanvasLayer/Dialog/Bunkers
-@onready var final_label: RichTextLabel = $CanvasLayer/Dialog/Final
-@onready var new_round_button: TextureButton = $CanvasLayer/Dialog/NewRound
+@onready var strokes_label: RichTextLabel = $HUD/Score/Strokes
+@onready var questions_label: RichTextLabel = $HUD/Score/Questions
+@onready var bunkers_label: RichTextLabel = $HUD/Score/Bunkers
+@onready var final_label: RichTextLabel = $HUD/Score/Final
+@onready var new_round_button: TextureButton = $HUD/Score/NewRound
 
 
 func _ready() -> void:
