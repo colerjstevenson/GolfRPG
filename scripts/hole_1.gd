@@ -2,7 +2,8 @@ extends Node2D
 
 @onready var ground: TileMapLayer = $ground
 @onready var tree: TileMapLayer = get_node_or_null("trees") as TileMapLayer
-@onready var ground_items: TileMapLayer = $ground_items_community
+@onready var private_ground_items: TileMapLayer = $ground_items_private
+@onready var community_ground_items: TileMapLayer = $ground_items_community
 @onready var follow_camera: Camera2D = $FollowCamera
 @onready var player: CharacterBody2D = $Player
 @onready var ball: Area2D = $Ball
@@ -12,6 +13,7 @@ extends Node2D
 @onready var fade_overlay: ColorRect = $HUD/FadeOverlay
 @onready var dialog: TextureRect = $HUD/Dialog
 @onready var rake_button: TextureButton = %Rake
+@onready var private_overlay: ColorRect = $HUD/PrivateOverlay
 
 const BASE_CAMERA_ZOOM := 2.0
 const SHOT_MODE_ZOOM_MULTIPLIER := 1.5
@@ -23,9 +25,18 @@ const HOLE_MAX_ENTRY_SPEED := 120.0
 const ENTRY_ZOOM_MULTIPLIER := 1.25
 const EXIT_ZOOM_MULTIPLIER := 1.35
 const TRANSITION_DURATION := 0.4
+const EXIT_STOP_DISTANCE := 72.0
+const FLYOVER_ZOOM_MULTIPLIER := 0.65
+const FLYOVER_PAN_DURATION := 7.0
+const FLYOVER_REVEAL_LEAD := 0.24
+const FLYOVER_LAYER_FADE_WIDTH := 0.16
+const FLYOVER_SPARKLE_INTERVAL := 0.022
+const ROUGH_DETAIL_CHANCE := 0.4
+const FLYOVER_ROUGH_DETAILS_PER_FRAME := 5
 const FIRST_HOLE_SCENE_PATH := "res://Scenes/Hole1.tscn"
 const END_SCENE_PATH := "res://Scenes/End.tscn"
 const NPC_DIALOG_ZOOM_MULTIPLIER := 2.2
+const FLYOVER_SPARKLES_SCRIPT := preload("res://scripts/flyover_sparkles.gd")
 # Fraction of the viewport the NPC is pinned to while talking, so they sit large near the top.
 const NPC_SCREEN_ANCHOR_RATIO := Vector2(0.5, 0.14)
 const NPC_STAND_DISTANCE := 28.0
@@ -33,6 +44,7 @@ const NPC_STAND_DISTANCE := 28.0
 enum TransitionPhase {
 	ENTERING,
 	PLAYING,
+	TRANSFORMING,
 	EXITING,
 }
 
@@ -51,10 +63,25 @@ var footprint_container: Node2D
 var pending_npc: Node2D = null
 var focus_anchor_node: Node2D
 var focus_anchor_screen_position: Vector2
+var ground_items: TileMapLayer
+var private_overlay_alpha: float = 0.0
+var rough_details_added: bool = false
+var flyover_anchor: Node2D
+var flyover_rough_cells: Array[Dictionary] = []
+var next_flyover_rough_index: int = 0
+var flyover_ducks: Array[Node2D] = []
+var next_flyover_duck_index: int = 0
+var flyover_sparkles: FlyoverSparkles
+var next_flyover_sparkle_time: float = 0.0
 
 func _ready() -> void:
 	CourseState.reset_hole()
 	_ensure_stroke_hud()
+	private_overlay_alpha = private_overlay.color.a
+	flyover_anchor = Node2D.new()
+	flyover_anchor.name = "FlyoverAnchor"
+	flyover_anchor.global_position = Vector2(camera_limit_rect.get_center())
+	add_child(flyover_anchor)
 
 	footprint_container = Node2D.new()
 	footprint_container.name = "Footprints"
@@ -62,10 +89,8 @@ func _ready() -> void:
 	add_child(footprint_container)
 
 	ball.ground_layer = ground
-	ball.ground_items_layer = ground_items
 	ball.tree_layer = tree
 	player.ground_layer = ground
-	player.ground_items_layer = ground_items
 	player.tree_layer = tree
 	player.footprint_parent = footprint_container
 	ball.clicked.connect(player.on_ball_clicked)
@@ -78,7 +103,9 @@ func _ready() -> void:
 	player.scripted_walk_finished.connect(_on_scripted_walk_finished)
 	if dialog != null:
 		dialog.dialog_closed.connect(_on_dialog_closed)
+		dialog.answer_recorded.connect(_on_answer_recorded)
 	_connect_npcs()
+	CourseState.register_hole_question_count(_get_hole_number(), _get_question_npc_count())
 	if rake_button != null:
 		rake_button.pressed.connect(_on_rake_pressed)
 	if exit != null:
@@ -88,11 +115,12 @@ func _ready() -> void:
 	camera_target = player
 	get_viewport().physics_object_picking = true
 	_set_camera_limits()
+	flyover_anchor.global_position = Vector2(camera_limit_rect.get_center())
 	target_zoom = follow_camera.zoom
 	default_zoom = target_zoom
 	player_entry_start = player.global_position
 	player.global_position = entrance.global_position
-	_add_rough_details()
+	_apply_course_mode(CourseState.is_hole_transformed(_get_hole_number()))
 	if fade_overlay != null:
 		fade_overlay.color = Color(0.0, 0.0, 0.0, 1.0)
 		fade_overlay.visible = true
@@ -162,6 +190,13 @@ func _on_exit_input(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> 
 		return
 	_viewport.set_input_as_handled()
 	exit_started = true
+	if CourseState.is_hole_ready_to_transform(_get_hole_number()):
+		transition_phase = TransitionPhase.TRANSFORMING
+		_set_world_input_enabled(false)
+		player.set_input_locked(true)
+		var exit_direction := (exit.global_position - player.global_position).normalized()
+		player.scripted_walk_to(exit.global_position - exit_direction * EXIT_STOP_DISTANCE)
+		return
 	transition_phase = TransitionPhase.EXITING
 	player.scripted_walk_to(exit.global_position)
 	target_zoom = default_zoom * EXIT_ZOOM_MULTIPLIER
@@ -172,6 +207,9 @@ func _on_scripted_walk_finished() -> void:
 		target_zoom = default_zoom
 		_fade_to(0.0, TRANSITION_DURATION)
 		return
+	if transition_phase == TransitionPhase.TRANSFORMING:
+		_run_exit_transformation()
+		return
 	if transition_phase == TransitionPhase.EXITING:
 		_fade_to(1.0, TRANSITION_DURATION)
 		await get_tree().create_timer(TRANSITION_DURATION).timeout
@@ -180,15 +218,61 @@ func _on_scripted_walk_finished() -> void:
 	if pending_npc != null:
 		_start_dialog(pending_npc)
 
+
+func _run_exit_transformation() -> void:
+	_remove_camera_limits()
+	flyover_anchor.global_position = entrance.global_position
+	follow_camera.global_position = entrance.global_position
+	focus_anchor_node = flyover_anchor
+	focus_anchor_screen_position = get_viewport_rect().size * 0.5
+	camera_target = null
+	target_zoom = default_zoom * FLYOVER_ZOOM_MULTIPLIER
+	_prepare_flyover_course_mode()
+	var pan_tween := create_tween()
+	pan_tween.set_parallel(true)
+	pan_tween.set_trans(Tween.TRANS_SINE)
+	pan_tween.set_ease(Tween.EASE_IN_OUT)
+	pan_tween.tween_property(flyover_anchor, "global_position", exit.global_position, FLYOVER_PAN_DURATION)
+	pan_tween.tween_method(_update_flyover_visuals, 0.0, 1.0, FLYOVER_PAN_DURATION)
+	await pan_tween.finished
+	_update_flyover_visuals(1.0)
+	_finish_flyover_course_mode()
+	CourseState.transform_hole(_get_hole_number())
+	focus_anchor_node = null
+	_restore_camera_limits()
+	camera_target = player
+	target_zoom = default_zoom * EXIT_ZOOM_MULTIPLIER
+	transition_phase = TransitionPhase.EXITING
+	player.set_input_locked(false)
+	player.scripted_walk_to(exit.global_position)
+
 func _connect_npcs() -> void:
 	for child in get_children():
 		if child.has_signal("clicked") and child.has_method("face_forward"):
 			child.connect("clicked", _on_npc_clicked)
 
+
+func _get_question_npc_count() -> int:
+	var question_npc_count := 0
+	for child in get_children():
+		if not (child.has_signal("clicked") and child.has_method("face_forward")):
+			continue
+		var prompt: Variant = child.get("prompt")
+		if prompt is String and not prompt.strip_edges().is_empty():
+			continue
+		question_npc_count += 1
+	return question_npc_count
+
+
+func _on_answer_recorded(_hole_name: String) -> void:
+	CourseState.register_hole_answer(_get_hole_number())
+
 func _on_npc_clicked(npc: Node2D) -> void:
 	if transition_phase != TransitionPhase.PLAYING:
 		return
 	if pending_npc != null or (dialog != null and dialog.is_open()):
+		return
+	if npc.has_talked_to:
 		return
 	if player.state != player.State.FREE:
 		return
@@ -227,6 +311,158 @@ func _set_world_input_enabled(enabled: bool) -> void:
 	ball.input_pickable = enabled
 	if rake_button != null:
 		rake_button.disabled = not enabled
+
+
+func _apply_course_mode(is_community: bool) -> void:
+	private_ground_items.visible = not is_community
+	community_ground_items.visible = is_community
+	private_ground_items.modulate.a = 1.0
+	community_ground_items.modulate.a = 1.0
+	ground_items = community_ground_items if is_community else private_ground_items
+	ball.ground_items_layer = ground_items
+	player.ground_items_layer = ground_items
+	for child in get_children():
+		if child.has_method("set_course_mode"):
+			child.set_course_mode(is_community, ground_items)
+	if is_community and not rough_details_added:
+		_add_rough_details()
+		rough_details_added = true
+	if private_overlay == null:
+		return
+	var remaining_private_ratio := 1.0 - float(CourseState.get_transformed_hole_count()) / float(CourseState.TOTAL_HOLES)
+	private_overlay.color.a = private_overlay_alpha * maxf(remaining_private_ratio, 0.0)
+	private_overlay.visible = private_overlay.color.a > 0.0
+
+
+func _prepare_flyover_course_mode() -> void:
+	private_ground_items.visible = true
+	private_ground_items.modulate.a = 1.0
+	community_ground_items.visible = true
+	community_ground_items.modulate.a = 0.0
+	ground_items = private_ground_items
+	ball.ground_items_layer = ground_items
+	player.ground_items_layer = ground_items
+	_prepare_flyover_rough_details()
+	_prepare_flyover_ducks()
+	if private_overlay != null:
+		private_overlay.visible = true
+		private_overlay.color.a = private_overlay_alpha * _get_current_private_ratio()
+	flyover_sparkles = FLYOVER_SPARKLES_SCRIPT.new() as FlyoverSparkles
+	$HUD.add_child(flyover_sparkles)
+	next_flyover_sparkle_time = 0.0
+
+
+func _update_flyover_visuals(progress: float) -> void:
+	var reveal_progress := clampf(progress + FLYOVER_REVEAL_LEAD, 0.0, 1.0)
+	var layer_progress := smoothstep(0.0, 1.0, (reveal_progress + FLYOVER_LAYER_FADE_WIDTH) / (1.0 + FLYOVER_LAYER_FADE_WIDTH * 2.0))
+	private_ground_items.modulate.a = 1.0 - layer_progress
+	community_ground_items.modulate.a = layer_progress
+	if private_overlay != null:
+		private_overlay.color.a = lerpf(
+			private_overlay_alpha * _get_current_private_ratio(),
+			private_overlay_alpha * _get_next_private_ratio(),
+			layer_progress
+		)
+	_reveal_flyover_rough_details(reveal_progress)
+	_reveal_flyover_ducks(reveal_progress)
+	if flyover_sparkles != null and Time.get_ticks_msec() * 0.001 >= next_flyover_sparkle_time:
+		flyover_sparkles.emit_fall(get_viewport_rect().size)
+		next_flyover_sparkle_time = Time.get_ticks_msec() * 0.001 + FLYOVER_SPARKLE_INTERVAL
+
+
+func _finish_flyover_course_mode() -> void:
+	private_ground_items.visible = false
+	private_ground_items.modulate.a = 1.0
+	community_ground_items.visible = true
+	community_ground_items.modulate.a = 1.0
+	ground_items = community_ground_items
+	ball.ground_items_layer = ground_items
+	player.ground_items_layer = ground_items
+	while next_flyover_rough_index < flyover_rough_cells.size():
+		_apply_next_flyover_rough_detail()
+	rough_details_added = true
+	if private_overlay != null:
+		private_overlay.color.a = private_overlay_alpha * _get_next_private_ratio()
+		private_overlay.visible = private_overlay.color.a > 0.0
+	if flyover_sparkles != null:
+		flyover_sparkles.finish()
+		flyover_sparkles = null
+
+
+func _prepare_flyover_rough_details() -> void:
+	flyover_rough_cells.clear()
+	next_flyover_rough_index = 0
+	var detail_cells := _collect_rough_detail_cells()
+	if detail_cells.is_empty():
+		return
+	for cell_position in ground.get_used_cells():
+		var tile_data := ground.get_cell_tile_data(cell_position)
+		if tile_data == null or tile_data.get_custom_data("rough") != true or randf() >= ROUGH_DETAIL_CHANCE:
+			continue
+		var detail_cell: Dictionary = detail_cells[randi() % detail_cells.size()]
+		flyover_rough_cells.append({
+			"cell_position": cell_position,
+			"detail_cell": detail_cell,
+			"progress": _get_flyover_progress(ground.to_global(ground.map_to_local(cell_position))),
+		})
+	flyover_rough_cells.sort_custom(func(first: Dictionary, second: Dictionary) -> bool:
+		return first["progress"] < second["progress"]
+	)
+
+
+func _reveal_flyover_rough_details(progress: float) -> void:
+	var revealed_count := 0
+	while next_flyover_rough_index < flyover_rough_cells.size() and revealed_count < FLYOVER_ROUGH_DETAILS_PER_FRAME:
+		var reveal_cell := flyover_rough_cells[next_flyover_rough_index]
+		if reveal_cell["progress"] > progress:
+			return
+		_apply_next_flyover_rough_detail()
+		revealed_count += 1
+
+
+func _apply_next_flyover_rough_detail() -> void:
+	var reveal_cell := flyover_rough_cells[next_flyover_rough_index]
+	var cell_position: Vector2i = reveal_cell["cell_position"]
+	var detail_cell: Dictionary = reveal_cell["detail_cell"]
+	ground.set_cell(cell_position, detail_cell["source_id"], detail_cell["atlas_coords"], detail_cell["alternative_tile"])
+	next_flyover_rough_index += 1
+
+
+func _prepare_flyover_ducks() -> void:
+	flyover_ducks.clear()
+	next_flyover_duck_index = 0
+	for child in get_children():
+		if child is Node2D and child.has_method("prepare_flyover_reveal"):
+			child.prepare_flyover_reveal(community_ground_items)
+			flyover_ducks.append(child)
+	flyover_ducks.sort_custom(func(first: Node2D, second: Node2D) -> bool:
+		return _get_flyover_progress(first.global_position) < _get_flyover_progress(second.global_position)
+	)
+
+
+func _reveal_flyover_ducks(progress: float) -> void:
+	while next_flyover_duck_index < flyover_ducks.size():
+		var duck := flyover_ducks[next_flyover_duck_index]
+		if _get_flyover_progress(duck.global_position) > progress:
+			return
+		duck.reveal_from_flyover()
+		next_flyover_duck_index += 1
+
+
+func _get_flyover_progress(world_position: Vector2) -> float:
+	var travel := exit.global_position - entrance.global_position
+	var travel_length_squared := travel.length_squared()
+	if is_zero_approx(travel_length_squared):
+		return 1.0
+	return clampf((world_position - entrance.global_position).dot(travel) / travel_length_squared, 0.0, 1.0)
+
+
+func _get_current_private_ratio() -> float:
+	return maxf(1.0 - float(CourseState.get_transformed_hole_count()) / float(CourseState.TOTAL_HOLES), 0.0)
+
+
+func _get_next_private_ratio() -> float:
+	return maxf(1.0 - float(CourseState.get_transformed_hole_count() + 1) / float(CourseState.TOTAL_HOLES), 0.0)
 
 func _ensure_stroke_hud() -> void:
 	var canvas_layer := get_node_or_null("HUD") as CanvasLayer
@@ -400,6 +636,8 @@ func _collect_rough_detail_cells() -> Array[Dictionary]:
 func _add_rough_details() -> void:
 	var detail_chance := 0.4
 	var detail_cells = _collect_rough_detail_cells()
+	if detail_cells.is_empty():
+		return
 
 	#swap out some of the rough tiles for rough detail tiles
 	for cell_position in ground.get_used_cells():

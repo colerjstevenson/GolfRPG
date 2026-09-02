@@ -61,6 +61,28 @@ func _ready() -> void:
 	_update_idle_anim()
 
 
+func set_course_mode(is_community: bool, active_ground_items: TileMapLayer) -> void:
+	ground_items_layer = active_ground_items
+	visible = is_community
+	modulate.a = 1.0
+	process_mode = Node.PROCESS_MODE_INHERIT if is_community else Node.PROCESS_MODE_DISABLED
+
+
+func prepare_flyover_reveal(active_ground_items: TileMapLayer) -> void:
+	ground_items_layer = active_ground_items
+	visible = true
+	modulate.a = 0.0
+	process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func reveal_from_flyover(duration: float = 0.28) -> void:
+	process_mode = Node.PROCESS_MODE_INHERIT
+	var reveal_tween := create_tween()
+	reveal_tween.set_trans(Tween.TRANS_SINE)
+	reveal_tween.set_ease(Tween.EASE_OUT)
+	reveal_tween.tween_property(self, "modulate:a", 1.0, duration)
+
+
 func knock_down() -> void:
 	if state == State.CHASE or _bump_cooldown_timer > 0.0:
 		return

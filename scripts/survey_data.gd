@@ -41,11 +41,11 @@ func _ready() -> void:
 	_load_questions()
 	npc_names = _load_lines(NAMES_PATH)
 	greetings = _load_lines(GREETINGS_PATH)
+	answers = _load_answer_log()
 	if npc_names.is_empty():
 		npc_names = PackedStringArray(["A Golfer"])
 	if greetings.is_empty():
 		greetings = PackedStringArray(["Hey, it's NAME. Got a second?"])
-	answers = _load_answer_log()
 
 
 ## Draws a question without repeating until every question has been used, then reshuffles.

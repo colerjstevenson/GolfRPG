@@ -45,5 +45,4 @@ func _count_up(label: RichTextLabel, prefix: String, target_value: int, separato
 
 func _on_new_round_pressed() -> void:
 	CourseState.reset_round()
-	SurveyData.clear_answers()
 	get_tree().change_scene_to_file(START_SCENE_PATH)

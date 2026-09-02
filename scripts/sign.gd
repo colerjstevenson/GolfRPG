@@ -16,7 +16,7 @@ func _ready() -> void:
 	$Dialog/text.text = message
 	
 	
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	var player = get_tree().get_first_node_in_group(&"player") as Node2D
 	
 	if player != null:

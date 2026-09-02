@@ -3,6 +3,7 @@ extends TextureRect
 ## Greeting -> question -> answer flow for NPC conversations. Content comes from the SurveyData autoload.
 
 signal dialog_closed(npc: Node2D)
+signal answer_recorded(hole_name: String)
 
 const ADVANCE_GUARD_SECONDS := 0.25
 const ANSWER_GUARD_SECONDS := 0.3
@@ -125,12 +126,14 @@ func _on_option_pressed(index: int) -> void:
 	var options: Array = current_question.get("options", [])
 	if index < options.size():
 		var option: Dictionary = options[index]
+		var hole_name := get_tree().current_scene.name
 		SurveyData.record_answer(
 			str(current_question.get("id", "")),
 			str(option.get("id", "")),
 			str(option.get("label", "")),
-			get_tree().current_scene.name
+			hole_name
 		)
+		answer_recorded.emit(hole_name)
 
 	_close()
 

@@ -95,53 +95,81 @@ func _unhandled_input(event: InputEvent) -> void:
 	if input_locked:
 		return
 
+	if event is InputEventScreenTouch:
+		_handle_primary_press(event.pressed, event.position)
+		return
+
+	if event is InputEventScreenDrag:
+		_handle_drag(event.position)
+		return
+
 	if state == State.FREE and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		target_position = get_global_mouse_position()
-		is_moving = true
+		_handle_primary_press(true, event.position)
 		return
 
 	if state != State.AIMING:
 		return
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			drag_start = get_viewport().get_mouse_position()
-			dragging = true
-			drag_power = 0.0
-			drag_dir = Vector2.ZERO
-			aim_drag_started.emit(current_ball, drag_start)
-		elif dragging:
-			var pull := get_viewport().get_mouse_position() - drag_start
-			if pull.length() > 2.0:
-				drag_dir = (-pull).normalized()
-				drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)
-				if drag_power < current_ball.min_shot_power_ratio:
-					current_ball.clear_aim_preview()
-					drag_power = 0.0
-					aim_power_changed.emit(0.0)
-				else:
-					aim_power_changed.emit(drag_power)
-					current_ball.set_aim_preview(drag_dir, drag_power)
-					current_ball.launch(drag_dir, drag_power)
-					state = State.LOCKED
-			else:
-				current_ball.clear_aim_preview()
-				aim_power_changed.emit(0.0)
-				state = State.FREE
-				current_ball = null
-				shot_mode_exited.emit()
-			dragging = false
-			return
+		_handle_primary_press(event.pressed, event.position)
+		return
 
 	if event is InputEventMouseMotion and dragging and current_ball != null:
-		var pull := get_viewport().get_mouse_position() - drag_start
-		if pull.length() > 2.0:
-			drag_dir = (-pull).normalized()
-			drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)
+		_handle_drag(event.position)
+
+func _handle_primary_press(pressed: bool, screen_position: Vector2) -> void:
+	if state == State.FREE and pressed:
+		target_position = get_viewport().get_canvas_transform().affine_inverse() * screen_position
+		is_moving = true
+		return
+
+	if state != State.AIMING:
+		return
+
+	if pressed:
+		drag_start = screen_position
+		dragging = true
+		drag_power = 0.0
+		drag_dir = Vector2.ZERO
+		aim_drag_started.emit(current_ball, drag_start)
+		return
+
+	if not dragging:
+		return
+
+	var pull := screen_position - drag_start
+	if pull.length() > 2.0:
+		drag_dir = (-pull).normalized()
+		drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)
+		if drag_power < current_ball.min_shot_power_ratio:
+			current_ball.clear_aim_preview()
+			drag_power = 0.0
+			aim_power_changed.emit(0.0)
+		else:
 			aim_power_changed.emit(drag_power)
 			current_ball.set_aim_preview(drag_dir, drag_power)
-		else:
-			current_ball.clear_aim_preview()
+			current_ball.launch(drag_dir, drag_power)
+			state = State.LOCKED
+	else:
+		current_ball.clear_aim_preview()
+		aim_power_changed.emit(0.0)
+		state = State.FREE
+		current_ball = null
+		shot_mode_exited.emit()
+	dragging = false
+
+func _handle_drag(screen_position: Vector2) -> void:
+	if not dragging or current_ball == null:
+		return
+
+	var pull := screen_position - drag_start
+	if pull.length() > 2.0:
+		drag_dir = (-pull).normalized()
+		drag_power = clamp(pull.length() / current_ball.max_drag_px, 0.0, 1.0)
+		aim_power_changed.emit(drag_power)
+		current_ball.set_aim_preview(drag_dir, drag_power)
+	else:
+		current_ball.clear_aim_preview()
 
 func _physics_process(delta: float) -> void:
 	if state == State.LOCKED and current_ball != null and current_ball.state == current_ball.State.IDLE:

@@ -170,134 +170,19 @@ Survey questions should be stored as data rather than hard-coded into individual
 
 ---
 
-# 7. Course Transformation System
+# 7. Course Transformation
 
-The player's answers should influence the course, but the transformation system must remain simple enough to be practical for a small project.
+Each hole begins in a private course state with its private item layer visible, a muted HUD overlay, and no active wildlife. A hole qualifies for transformation when the player has answered every question offered by its NPCs during the current round.
 
-The game should **not** attempt to create a completely unique course for every possible combination of answers.
+After the player completes a qualifying hole and chooses its exit, the player pauses before leaving while the camera flies out to show the course. The hole changes to its community state during that view: its community item layer appears, rough detail is added, ducks become active, and the private overlay becomes lighter based on the number of transformed holes.
 
-Instead, survey responses contribute to a small number of broad course values.
-
-Potential values include:
-
-* **Golf**
-* **Nature**
-* **Public Access**
-* **Community**
-* **Recreation**
-* **Social/Events**
-
-Each answer can increase, decrease, or leave unchanged one or more of these values.
-
-For example:
-
-> "How important is it that people who don't golf can use this land?"
-
-Possible responses:
-
-* Very important → Public Access +3
-* Somewhat important → Public Access +2
-* Not very important → Public Access +0
-
-The player should generally not need to see these numerical values.
-
-They exist primarily to drive the game's world.
+Survey answers remain in the response log across rounds. An incomplete round still starts again in the private state because only answers made in the active round qualify transformations. Transforming all nine holes permanently unlocks the community course state for future restarts and application launches.
 
 ---
 
-# 8. Visual Transformation
 
-The course should transform through **reusable visual layers** rather than requiring completely different maps.
 
-A hole can conceptually contain:
 
-```text
-Course
-├── Base
-├── Nature
-├── Community
-├── Recreation
-└── Social
-```
-
-The base layer contains the normal golf course.
-
-Additional layers contain optional elements that can appear as the player's course evolves.
-
-Examples:
-
-### Nature Layer
-
-* Wildflowers
-* Meadows
-* Additional vegetation
-* Wildlife
-* Naturalized areas
-
-### Community Layer
-
-* Community gardens
-* Picnic areas
-* Gathering spaces
-* Families
-* Community facilities
-
-### Recreation Layer
-
-* Walking trails
-* Exercise areas
-* Multi-use recreation
-* Non-golf activities
-
-### Social/Event Layer
-
-* Small stages
-* Markets
-* Community events
-* Groups of people
-
-This allows the same assets to be reused throughout the entire game.
-
----
-
-# 9. Transformation Philosophy
-
-The transformation should feel gradual rather than functioning as a simple:
-
-**Before → Survey → After**
-
-Instead, players should notice the course slowly becoming more alive.
-
-For example:
-
-### Beginning
-
-* Quiet
-* Empty
-* Highly manicured
-* Primarily golf-focused
-* Corporate/sterile atmosphere
-
-### Middle
-
-* More people
-* Some naturalized areas
-* Walking paths
-* Occasional community activities
-* More visual variety
-
-### End
-
-* Vibrant
-* Busy
-* Community-oriented
-* Multiple recreational uses
-* Stronger connection to surrounding residents
-* Golf still exists, but is no longer the only visible purpose
-
-The final course should feel like a place that serves a community rather than simply a place where golf happens.
-
----
 
 # 10. Asset Strategy
 
