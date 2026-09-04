@@ -7,7 +7,7 @@ const COLORS := [
 	Color("9ce8d7"),
 	Color("ffffff"),
 ]
-const MAX_PARTICLES := 400
+const MAX_PARTICLES := 800
 
 var particles: Array[Dictionary] = []
 var emitting: bool = true
@@ -71,6 +71,6 @@ func _spawn_particle(screen_position: Vector2) -> void:
 		"age": 0.0,
 		"lifetime": randf_range(1.6, 2.8),
 		"color": COLORS[randi() % COLORS.size()],
-		"size": 1.0 if randf() < 0.75 else 2.0,
+		"size": 2.0 if randf() < 0.75 else 4.0,
 		"is_star": true,
 	})

@@ -28,11 +28,11 @@ const TRANSITION_DURATION := 0.4
 const EXIT_STOP_DISTANCE := 72.0
 const FLYOVER_ZOOM_MULTIPLIER := 0.65
 const FLYOVER_PAN_DURATION := 7.0
-const FLYOVER_REVEAL_LEAD := 0.24
+const FLYOVER_REVEAL_LEAD := 0.05
 const FLYOVER_LAYER_FADE_WIDTH := 0.16
-const FLYOVER_SPARKLE_INTERVAL := 0.022
+const FLYOVER_SPARKLE_INTERVAL := 0.052
 const ROUGH_DETAIL_CHANCE := 0.4
-const FLYOVER_ROUGH_DETAILS_PER_FRAME := 5
+const FLYOVER_ROUGH_DETAILS_PER_FRAME := 50
 const FIRST_HOLE_SCENE_PATH := "res://Scenes/Hole1.tscn"
 const END_SCENE_PATH := "res://Scenes/End.tscn"
 const NPC_DIALOG_ZOOM_MULTIPLIER := 2.2
@@ -329,9 +329,8 @@ func _apply_course_mode(is_community: bool) -> void:
 		rough_details_added = true
 	if private_overlay == null:
 		return
-	var remaining_private_ratio := 1.0 - float(CourseState.get_transformed_hole_count()) / float(CourseState.TOTAL_HOLES)
-	private_overlay.color.a = private_overlay_alpha * maxf(remaining_private_ratio, 0.0)
-	private_overlay.visible = private_overlay.color.a > 0.0
+	private_overlay.color.a = private_overlay_alpha
+	private_overlay.visible = true
 
 
 func _prepare_flyover_course_mode() -> void:
@@ -346,7 +345,7 @@ func _prepare_flyover_course_mode() -> void:
 	_prepare_flyover_ducks()
 	if private_overlay != null:
 		private_overlay.visible = true
-		private_overlay.color.a = private_overlay_alpha * _get_current_private_ratio()
+		private_overlay.color.a = private_overlay_alpha
 	flyover_sparkles = FLYOVER_SPARKLES_SCRIPT.new() as FlyoverSparkles
 	$HUD.add_child(flyover_sparkles)
 	next_flyover_sparkle_time = 0.0
@@ -359,8 +358,8 @@ func _update_flyover_visuals(progress: float) -> void:
 	community_ground_items.modulate.a = layer_progress
 	if private_overlay != null:
 		private_overlay.color.a = lerpf(
-			private_overlay_alpha * _get_current_private_ratio(),
-			private_overlay_alpha * _get_next_private_ratio(),
+			private_overlay_alpha,
+			0.0,
 			layer_progress
 		)
 	_reveal_flyover_rough_details(reveal_progress)
@@ -382,8 +381,8 @@ func _finish_flyover_course_mode() -> void:
 		_apply_next_flyover_rough_detail()
 	rough_details_added = true
 	if private_overlay != null:
-		private_overlay.color.a = private_overlay_alpha * _get_next_private_ratio()
-		private_overlay.visible = private_overlay.color.a > 0.0
+		private_overlay.color.a = 0.0
+		private_overlay.visible = false
 	if flyover_sparkles != null:
 		flyover_sparkles.finish()
 		flyover_sparkles = null
@@ -456,13 +455,6 @@ func _get_flyover_progress(world_position: Vector2) -> float:
 		return 1.0
 	return clampf((world_position - entrance.global_position).dot(travel) / travel_length_squared, 0.0, 1.0)
 
-
-func _get_current_private_ratio() -> float:
-	return maxf(1.0 - float(CourseState.get_transformed_hole_count()) / float(CourseState.TOTAL_HOLES), 0.0)
-
-
-func _get_next_private_ratio() -> float:
-	return maxf(1.0 - float(CourseState.get_transformed_hole_count() + 1) / float(CourseState.TOTAL_HOLES), 0.0)
 
 func _ensure_stroke_hud() -> void:
 	var canvas_layer := get_node_or_null("HUD") as CanvasLayer
